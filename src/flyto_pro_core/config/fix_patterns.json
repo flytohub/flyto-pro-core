@@ -1,0 +1,137 @@
+{
+  "version": "1.0.0",
+  "description": "Error patterns and fixes - no LLM needed",
+
+  "patterns": {
+    "python": [
+      {
+        "id": "module_not_found",
+        "pattern": "ModuleNotFoundError: No module named ['\"]?([a-zA-Z0-9_]+)",
+        "extract": {"module": 1},
+        "fix": "pip install {module}",
+        "confidence": 0.95,
+        "category": "package"
+      },
+      {
+        "id": "import_error",
+        "pattern": "ImportError: cannot import name .+ from ['\"]?([a-zA-Z0-9_]+)",
+        "extract": {"package": 1},
+        "fix": "pip install -U {package}",
+        "confidence": 0.8,
+        "category": "package"
+      },
+      {
+        "id": "pytest_not_found",
+        "pattern": "pytest.*not found|No module named pytest",
+        "fix": "pip install pytest",
+        "confidence": 0.95,
+        "category": "test"
+      },
+      {
+        "id": "pytest_asyncio_missing",
+        "pattern": "pytest.*asyncio|PytestUnhandledCoroutineWarning",
+        "fix": "pip install pytest-asyncio",
+        "confidence": 0.9,
+        "category": "test"
+      }
+    ],
+
+    "javascript": [
+      {
+        "id": "module_not_found",
+        "pattern": "Cannot find module ['\"]?([a-zA-Z0-9@/_-]+)",
+        "extract": {"module": 1},
+        "fix": "npm install {module}",
+        "confidence": 0.95,
+        "category": "package"
+      },
+      {
+        "id": "peer_dependency",
+        "pattern": "npm WARN.*peer dependency.*([a-zA-Z0-9@/_-]+)",
+        "extract": {"module": 1},
+        "fix": "npm install {module}",
+        "confidence": 0.85,
+        "category": "package"
+      },
+      {
+        "id": "jest_not_found",
+        "pattern": "jest.*not found|Cannot find module.*jest",
+        "fix": "npm install --save-dev jest",
+        "confidence": 0.95,
+        "category": "test"
+      }
+    ],
+
+    "go": [
+      {
+        "id": "package_not_found",
+        "pattern": "cannot find package \"([a-zA-Z0-9./_-]+)\"",
+        "extract": {"package": 1},
+        "fix": "go get {package}",
+        "confidence": 0.95,
+        "category": "package"
+      },
+      {
+        "id": "missing_go_sum",
+        "pattern": "missing go\\.sum entry",
+        "fix": "go mod tidy",
+        "confidence": 0.95,
+        "category": "package"
+      }
+    ],
+
+    "universal": [
+      {
+        "id": "postgres_connection",
+        "pattern": "(connection refused|could not connect).*5432|psycopg.*Connection refused",
+        "fix": "docker run -d --name hunt-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:15-alpine && sleep 3",
+        "confidence": 0.9,
+        "category": "service"
+      },
+      {
+        "id": "mysql_connection",
+        "pattern": "(connection refused|could not connect).*3306|mysql.*Connection refused",
+        "fix": "docker run -d --name hunt-mysql -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 mysql:8 && sleep 5",
+        "confidence": 0.9,
+        "category": "service"
+      },
+      {
+        "id": "redis_connection",
+        "pattern": "(connection refused|could not connect).*6379|redis.*Connection refused",
+        "fix": "docker run -d --name hunt-redis -p 6379:6379 redis:7-alpine && sleep 1",
+        "confidence": 0.9,
+        "category": "service"
+      },
+      {
+        "id": "mongodb_connection",
+        "pattern": "(connection refused|could not connect).*27017|MongoNetworkError",
+        "fix": "docker run -d --name hunt-mongo -p 27017:27017 mongo:6 && sleep 2",
+        "confidence": 0.9,
+        "category": "service"
+      },
+      {
+        "id": "env_var_missing",
+        "pattern": "KeyError:?\\s*['\"]?([A-Z][A-Z0-9_]*(_[A-Z0-9]+)+)['\"]?",
+        "extract": {"var": 1},
+        "fix": "export {var}=test_value",
+        "confidence": 0.85,
+        "category": "environment"
+      },
+      {
+        "id": "permission_denied",
+        "pattern": "PermissionError.*Permission denied.*['\"]([^'\"]+)['\"]",
+        "extract": {"file": 1},
+        "fix": "chmod +rw {file}",
+        "confidence": 0.8,
+        "category": "permission"
+      },
+      {
+        "id": "disk_full",
+        "pattern": "No space left on device|ENOSPC",
+        "fix": "docker system prune -af",
+        "confidence": 0.9,
+        "category": "system"
+      }
+    ]
+  }
+}

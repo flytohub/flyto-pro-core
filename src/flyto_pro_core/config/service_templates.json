@@ -1,0 +1,156 @@
+{
+  "version": "1.0.0",
+  "description": "Docker service templates - auto-start required services",
+
+  "services": {
+    "postgres": {
+      "name": "PostgreSQL",
+      "port": 5432,
+      "detection_patterns": [
+        "psycopg", "asyncpg", "sqlalchemy.*postgres", "DATABASE_URL.*postgres",
+        "POSTGRES_", "postgresql://", "pg_"
+      ],
+      "docker": {
+        "image": "postgres:15-alpine",
+        "container_name": "hunt-postgres",
+        "env": {
+          "POSTGRES_PASSWORD": "postgres",
+          "POSTGRES_USER": "postgres",
+          "POSTGRES_DB": "test"
+        },
+        "ports": ["5432:5432"],
+        "health_check": "pg_isready -U postgres",
+        "startup_wait": 3
+      },
+      "connection_test": "psql -h localhost -U postgres -c 'SELECT 1'"
+    },
+
+    "mysql": {
+      "name": "MySQL",
+      "port": 3306,
+      "detection_patterns": [
+        "mysql", "pymysql", "mysqlclient", "DATABASE_URL.*mysql",
+        "MYSQL_", "mysql://"
+      ],
+      "docker": {
+        "image": "mysql:8",
+        "container_name": "hunt-mysql",
+        "env": {
+          "MYSQL_ROOT_PASSWORD": "root",
+          "MYSQL_DATABASE": "test"
+        },
+        "ports": ["3306:3306"],
+        "health_check": "mysqladmin ping -h localhost",
+        "startup_wait": 10
+      },
+      "connection_test": "mysql -h localhost -u root -proot -e 'SELECT 1'"
+    },
+
+    "redis": {
+      "name": "Redis",
+      "port": 6379,
+      "detection_patterns": [
+        "redis", "aioredis", "REDIS_URL", "REDIS_HOST",
+        "redis://", "celery.*redis"
+      ],
+      "docker": {
+        "image": "redis:7-alpine",
+        "container_name": "hunt-redis",
+        "env": {},
+        "ports": ["6379:6379"],
+        "health_check": "redis-cli ping",
+        "startup_wait": 1
+      },
+      "connection_test": "redis-cli ping"
+    },
+
+    "mongodb": {
+      "name": "MongoDB",
+      "port": 27017,
+      "detection_patterns": [
+        "pymongo", "motor", "mongoengine", "MONGO_URL", "MONGODB_",
+        "mongodb://", "mongo"
+      ],
+      "docker": {
+        "image": "mongo:6",
+        "container_name": "hunt-mongo",
+        "env": {},
+        "ports": ["27017:27017"],
+        "health_check": "mongosh --eval 'db.runCommand({ping:1})'",
+        "startup_wait": 3
+      },
+      "connection_test": "mongosh --eval 'db.runCommand({ping:1})'"
+    },
+
+    "rabbitmq": {
+      "name": "RabbitMQ",
+      "port": 5672,
+      "detection_patterns": [
+        "pika", "aio-pika", "celery.*amqp", "RABBITMQ_", "AMQP_",
+        "amqp://", "rabbitmq"
+      ],
+      "docker": {
+        "image": "rabbitmq:3-management-alpine",
+        "container_name": "hunt-rabbitmq",
+        "env": {
+          "RABBITMQ_DEFAULT_USER": "guest",
+          "RABBITMQ_DEFAULT_PASS": "guest"
+        },
+        "ports": ["5672:5672", "15672:15672"],
+        "health_check": "rabbitmq-diagnostics -q ping",
+        "startup_wait": 10
+      },
+      "connection_test": "rabbitmq-diagnostics -q ping"
+    },
+
+    "elasticsearch": {
+      "name": "Elasticsearch",
+      "port": 9200,
+      "detection_patterns": [
+        "elasticsearch", "elastic", "ELASTICSEARCH_", "ES_HOST",
+        "http://.*:9200"
+      ],
+      "docker": {
+        "image": "elasticsearch:8.11.0",
+        "container_name": "hunt-elasticsearch",
+        "env": {
+          "discovery.type": "single-node",
+          "xpack.security.enabled": "false",
+          "ES_JAVA_OPTS": "-Xms256m -Xmx256m"
+        },
+        "ports": ["9200:9200"],
+        "health_check": "curl -s http://localhost:9200/_cluster/health",
+        "startup_wait": 30
+      },
+      "connection_test": "curl -s http://localhost:9200/_cluster/health"
+    },
+
+    "minio": {
+      "name": "MinIO (S3)",
+      "port": 9000,
+      "detection_patterns": [
+        "minio", "boto3", "s3", "AWS_", "S3_", "MINIO_",
+        "s3://", "localstack"
+      ],
+      "docker": {
+        "image": "minio/minio:latest",
+        "container_name": "hunt-minio",
+        "env": {
+          "MINIO_ROOT_USER": "minioadmin",
+          "MINIO_ROOT_PASSWORD": "minioadmin"
+        },
+        "ports": ["9000:9000", "9001:9001"],
+        "command": "server /data --console-address ':9001'",
+        "health_check": "curl -s http://localhost:9000/minio/health/live",
+        "startup_wait": 3
+      },
+      "connection_test": "curl -s http://localhost:9000/minio/health/live"
+    }
+  },
+
+  "cleanup": {
+    "container_prefix": "hunt-",
+    "auto_remove": true,
+    "force_remove": true
+  }
+}

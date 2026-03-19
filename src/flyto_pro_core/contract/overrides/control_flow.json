@@ -1,0 +1,307 @@
+[
+  {
+    "module_id": "flow.if_else",
+    "version": "1.0.0",
+    "category": "flow",
+    "label": "If-Else",
+    "description": "Conditional branching based on a condition expression",
+    "ports": [
+      {
+        "id": "in",
+        "direction": "input",
+        "edge_type": "data",
+        "data_type": "any",
+        "required": true,
+        "label": "Input"
+      },
+      {
+        "id": "true",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "True Branch"
+      },
+      {
+        "id": "false",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "False Branch"
+      }
+    ],
+    "params_schema": {
+      "params": {
+        "condition": {
+          "type": "expression",
+          "required": true,
+          "label": "Condition",
+          "description": "JavaScript expression that evaluates to true or false",
+          "placeholder": "${steps.prev.value} > 10"
+        }
+      }
+    },
+    "tags": ["control", "branching", "conditional"],
+    "tier": "FREE"
+  },
+  {
+    "module_id": "flow.loop",
+    "version": "1.0.0",
+    "category": "flow",
+    "label": "Loop",
+    "description": "Iterate over an array of items",
+    "ports": [
+      {
+        "id": "in",
+        "direction": "input",
+        "edge_type": "data",
+        "data_type": "array",
+        "required": true,
+        "label": "Items"
+      },
+      {
+        "id": "body",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Loop Body",
+        "scope_provides": ["loop.item", "loop.index"]
+      },
+      {
+        "id": "done",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Done"
+      }
+    ],
+    "params_schema": {
+      "params": {
+        "items": {
+          "type": "expression",
+          "required": true,
+          "label": "Items to Loop",
+          "description": "Array expression to iterate over",
+          "placeholder": "${steps.csv_read.rows}"
+        },
+        "max_iterations": {
+          "type": "number",
+          "required": false,
+          "default": 1000,
+          "label": "Max Iterations",
+          "description": "Maximum number of iterations to prevent infinite loops",
+          "validation": {"min": 1, "max": 10000}
+        },
+        "delay_ms": {
+          "type": "number",
+          "required": false,
+          "default": 0,
+          "label": "Delay (ms)",
+          "description": "Delay between iterations in milliseconds"
+        }
+      }
+    },
+    "output_schema": {
+      "data_type": "object",
+      "shape": "object{iterations:number, results:array}"
+    },
+    "tags": ["control", "iteration", "loop", "foreach"],
+    "tier": "FREE"
+  },
+  {
+    "module_id": "flow.switch",
+    "version": "1.0.0",
+    "category": "flow",
+    "label": "Switch",
+    "description": "Multi-way branching based on value matching",
+    "ports": [
+      {
+        "id": "in",
+        "direction": "input",
+        "edge_type": "data",
+        "data_type": "any",
+        "required": true,
+        "label": "Input"
+      },
+      {
+        "id": "case:*",
+        "direction": "output",
+        "edge_type": "control",
+        "dynamic": true,
+        "label": "Case"
+      },
+      {
+        "id": "default",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Default"
+      }
+    ],
+    "params_schema": {
+      "params": {
+        "value": {
+          "type": "expression",
+          "required": true,
+          "label": "Switch Value",
+          "description": "Value to match against cases",
+          "placeholder": "${steps.input.type}"
+        },
+        "cases": {
+          "type": "array",
+          "required": true,
+          "label": "Cases",
+          "description": "List of case values to match"
+        }
+      }
+    },
+    "tags": ["control", "branching", "switch", "case"],
+    "tier": "FREE"
+  },
+  {
+    "module_id": "flow.try_catch",
+    "version": "1.0.0",
+    "category": "flow",
+    "label": "Try-Catch",
+    "description": "Error handling wrapper for graceful error recovery",
+    "ports": [
+      {
+        "id": "in",
+        "direction": "input",
+        "edge_type": "data",
+        "data_type": "any",
+        "required": true,
+        "label": "Input"
+      },
+      {
+        "id": "try",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Try"
+      },
+      {
+        "id": "catch",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Catch",
+        "scope_provides": ["error.message", "error.type", "error.stack"]
+      },
+      {
+        "id": "finally",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Finally"
+      }
+    ],
+    "params_schema": {
+      "params": {
+        "error_types": {
+          "type": "array",
+          "required": false,
+          "label": "Error Types",
+          "description": "Specific error types to catch (empty = catch all)"
+        },
+        "retry_count": {
+          "type": "number",
+          "required": false,
+          "default": 0,
+          "label": "Retry Count",
+          "description": "Number of retries before catching"
+        }
+      }
+    },
+    "tags": ["control", "error", "exception", "try", "catch"],
+    "tier": "FREE"
+  },
+  {
+    "module_id": "flow.parallel",
+    "version": "1.0.0",
+    "category": "flow",
+    "label": "Parallel",
+    "description": "Execute multiple branches in parallel",
+    "ports": [
+      {
+        "id": "in",
+        "direction": "input",
+        "edge_type": "data",
+        "data_type": "any",
+        "required": true,
+        "label": "Input"
+      },
+      {
+        "id": "branch_1",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Branch 1"
+      },
+      {
+        "id": "branch_2",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Branch 2"
+      },
+      {
+        "id": "branch_3",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Branch 3"
+      },
+      {
+        "id": "join",
+        "direction": "output",
+        "edge_type": "control",
+        "label": "Join (after all complete)"
+      }
+    ],
+    "params_schema": {
+      "params": {
+        "max_concurrent": {
+          "type": "number",
+          "required": false,
+          "default": 3,
+          "label": "Max Concurrent",
+          "description": "Maximum parallel executions"
+        },
+        "fail_fast": {
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "label": "Fail Fast",
+          "description": "Stop all branches on first failure"
+        }
+      }
+    },
+    "tags": ["control", "parallel", "concurrent"],
+    "tier": "PRO"
+  },
+  {
+    "module_id": "flow.wait",
+    "version": "1.0.0",
+    "category": "flow",
+    "label": "Wait",
+    "description": "Wait for a specified duration or condition",
+    "ports": [
+      {
+        "id": "in",
+        "direction": "input",
+        "edge_type": "data",
+        "data_type": "any",
+        "label": "Input"
+      },
+      {
+        "id": "out",
+        "direction": "output",
+        "edge_type": "data",
+        "data_type": "any",
+        "label": "Output"
+      }
+    ],
+    "params_schema": {
+      "params": {
+        "duration_ms": {
+          "type": "number",
+          "required": true,
+          "label": "Duration (ms)",
+          "description": "Time to wait in milliseconds",
+          "validation": {"min": 0, "max": 300000}
+        }
+      }
+    },
+    "tags": ["control", "wait", "delay", "sleep"],
+    "tier": "FREE"
+  }
+]

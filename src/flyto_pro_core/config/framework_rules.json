@@ -1,0 +1,96 @@
+{
+  "version": "1.0.0",
+  "description": "Framework detection rules - hot-pluggable",
+
+  "rules": {
+    "python": {
+      "django": {
+        "files": ["manage.py", "settings.py", "urls.py"],
+        "imports": ["django", "from django"],
+        "dirs": ["templates", "static"]
+      },
+      "flask": {
+        "files": ["app.py", "wsgi.py"],
+        "imports": ["flask", "from flask"]
+      },
+      "fastapi": {
+        "imports": ["fastapi", "from fastapi"]
+      },
+      "pytest": {
+        "files": ["pytest.ini", "conftest.py", "pyproject.toml"],
+        "imports": ["pytest"],
+        "dirs": ["tests", "test"]
+      },
+      "celery": {
+        "files": ["celery.py", "celeryconfig.py"],
+        "imports": ["celery", "from celery"]
+      },
+      "scrapy": {
+        "files": ["scrapy.cfg"],
+        "imports": ["scrapy"],
+        "dirs": ["spiders"]
+      }
+    },
+
+    "javascript": {
+      "react": {
+        "deps": ["react", "react-dom"],
+        "files": ["App.jsx", "App.tsx", "index.jsx", "index.tsx"]
+      },
+      "vue": {
+        "deps": ["vue"],
+        "files": ["App.vue", "main.js", "main.ts"]
+      },
+      "angular": {
+        "deps": ["@angular/core"],
+        "files": ["angular.json"]
+      },
+      "express": {
+        "deps": ["express"]
+      },
+      "nextjs": {
+        "deps": ["next"],
+        "files": ["next.config.js", "next.config.mjs"],
+        "dirs": ["pages", "app"]
+      },
+      "nuxt": {
+        "deps": ["nuxt"],
+        "files": ["nuxt.config.js", "nuxt.config.ts"]
+      },
+      "jest": {
+        "deps": ["jest"],
+        "files": ["jest.config.js", "jest.config.ts"]
+      },
+      "mocha": {
+        "deps": ["mocha"]
+      },
+      "nestjs": {
+        "deps": ["@nestjs/core"]
+      }
+    },
+
+    "go": {
+      "gin": {
+        "imports": ["github.com/gin-gonic/gin"]
+      },
+      "echo": {
+        "imports": ["github.com/labstack/echo"]
+      },
+      "fiber": {
+        "imports": ["github.com/gofiber/fiber"]
+      }
+    },
+
+    "rust": {
+      "actix": {
+        "deps": ["actix-web"]
+      },
+      "rocket": {
+        "deps": ["rocket"]
+      },
+      "tokio": {
+        "deps": ["tokio"]
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flyto-pro-core"
+version = "1.0.0"
+description = "Open-source core for Flyto Pro — contracts, cost control, interfaces, and agent runtime"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+authors = [
+    {name = "Flyto Team", email = "team@flyto.io"}
+]
+keywords = [
+    "workflow", "automation", "contracts", "validation",
+    "agent-runtime", "cost-control", "interfaces",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.0.0"]
+qdrant = ["qdrant-client>=1.7.0"]
+full = ["flyto-pro-core[openai,qdrant]"]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/flytohub/flyto-pro-core"
+Repository = "https://github.com/flytohub/flyto-pro-core.git"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flyto_pro_core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
