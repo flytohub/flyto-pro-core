@@ -1,0 +1,46 @@
+name: Split text by newline and process each line
+version: 1.0.0
+steps:
+- id: node_1773899497319
+  module: flow.start
+  label: node_1773899497319
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773899497320_0_3js7on
+  module: string.split
+  label: node_1773899497320_0_3js7on
+  params:
+    text: '{{text}}'
+    delimiter: ' '
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+edges:
+- id: e_node_1773899497319_node_1773899497320_0_3js7on
+  source: node_1773899497319
+  target: node_1773899497320_0_3js7on
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 1
+      grid:
+      - 12
+      columnsData:
+      - components:
+        - label: Text
+          id: text
+          type: textarea
+          props:
+            placeholder: Enter text to process...
+            required: true
+            rows: 6

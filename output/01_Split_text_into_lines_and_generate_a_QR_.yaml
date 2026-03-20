@@ -1,0 +1,96 @@
+name: Split text into lines and generate a QR code for each line
+version: 1.0.0
+steps:
+- id: node_1773896850923
+  module: flow.start
+  label: node_1773896850923
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773896850924_0_wuouga
+  module: string.split
+  label: node_1773896850924_0_wuouga
+  params:
+    text: '{{text}}'
+    delimiter: ' '
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+- id: node_1773896850925_1_l5bs5h
+  module: flow.foreach
+  label: node_1773896850925_1_l5bs5h
+  params:
+    items: ${steps.node_1773896850924_0_wuouga.result}
+    item_var: item
+    index_var: index
+    output_mode: collect
+  positionX: 700
+  positionY: 150
+  orderIndex: 2
+  connections:
+    iterate:
+    - node_1773896850926_2_obstx0
+- id: node_1773896850926_2_obstx0
+  module: image.qrcode_generate
+  label: node_1773896850926_2_obstx0
+  params:
+    data: ${loop.item}
+    output_path: ''
+    format: png
+    size: 300
+    color: '#000000'
+    background: '#FFFFFF'
+    error_correction: M
+    border: 4
+    version: 0
+    logo_path: ''
+  positionX: 700
+  positionY: 400
+  orderIndex: 3
+edges:
+- id: e_node_1773896850923_node_1773896850924_0_wuouga
+  source: node_1773896850923
+  target: node_1773896850924_0_wuouga
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_node_1773896850924_0_wuouga_node_1773896850925_1_l5bs5h
+  source: node_1773896850924_0_wuouga
+  target: node_1773896850925_1_l5bs5h
+  sourceHandle: output
+  targetHandle: in
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: loop_iterate_node_1773896850925_1_l5bs5h_node_1773896850926_2_obstx0
+  source: node_1773896850925_1_l5bs5h
+  target: node_1773896850926_2_obstx0
+  sourceHandle: body_out
+  targetHandle: target-top
+  type: glow
+  data:
+    edgeType: iterate
+    pathType: smoothstep
+  label: Iterate
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 1
+      grid:
+      - 12
+      columnsData:
+      - components:
+        - label: Text
+          id: text
+          type: textarea
+          props:
+            placeholder: Enter text to process...
+            required: true
+            rows: 6

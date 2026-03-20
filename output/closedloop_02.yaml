@@ -1,0 +1,74 @@
+name: Fetch JSON from API and save to file
+version: 1.0.0
+steps:
+- id: node_1773899471929
+  module: flow.start
+  label: node_1773899471929
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773899471930_0_x9d5h4
+  module: http.get
+  label: node_1773899471930_0_x9d5h4
+  params:
+    url: '{{url}}'
+    headers: {}
+    query: {}
+    timeout: 30
+    verify_ssl: true
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+- id: node_1773899471931_1_bjol2d
+  module: file.write
+  label: node_1773899471931_1_bjol2d
+  params:
+    path: '{{path}}'
+    content: ${steps.api_request.data.body}
+    encoding: utf-8
+    mode: overwrite
+  positionX: 700
+  positionY: 150
+  orderIndex: 2
+edges:
+- id: e_node_1773899471929_node_1773899471930_0_x9d5h4
+  source: node_1773899471929
+  target: node_1773899471930_0_x9d5h4
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_node_1773899471930_0_x9d5h4_node_1773899471931_1_bjol2d
+  source: node_1773899471930_0_x9d5h4
+  target: node_1773899471931_1_bjol2d
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: URL
+          id: url
+          type: text
+          props:
+            placeholder: https://api.example.com/data
+      - components:
+        - label: File Path
+          id: path
+          type: text
+          props:
+            placeholder: /path/to/file.txt

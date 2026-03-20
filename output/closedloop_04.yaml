@@ -1,0 +1,69 @@
+name: Fetch a URL and render a text template with the result
+version: 1.0.0
+steps:
+- id: node_1773899480404
+  module: flow.start
+  label: node_1773899480404
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773899480405_0_xzggdn
+  module: http.get
+  label: node_1773899480405_0_xzggdn
+  params:
+    url: '{{url}}'
+    headers: {}
+    query: {}
+    timeout: 30
+    verify_ssl: true
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+- id: node_1773899480406_1_hnrm41
+  module: string.template
+  label: node_1773899480406_1_hnrm41
+  params:
+    template: ${steps.node_1773899480405_0_xzggdn.body}
+    missing_value: ''
+    preserve_missing: false
+    variables: {}
+  positionX: 700
+  positionY: 150
+  orderIndex: 2
+edges:
+- id: e_node_1773899480404_node_1773899480405_0_xzggdn
+  source: node_1773899480404
+  target: node_1773899480405_0_xzggdn
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_node_1773899480405_0_xzggdn_node_1773899480406_1_hnrm41
+  source: node_1773899480405_0_xzggdn
+  target: node_1773899480406_1_hnrm41
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: URL
+          id: url
+          type: text
+          props:
+            placeholder: https://api.example.com/data
+      - components: []

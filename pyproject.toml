@@ -31,7 +31,9 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.0.0"]
 qdrant = ["qdrant-client>=1.7.0"]
-full = ["flyto-pro-core[openai,qdrant]"]
+blueprint = ["flyto-blueprint>=0.2.0"]
+factory = ["flyto-pro-core[blueprint,openai]"]
+full = ["flyto-pro-core[openai,qdrant,blueprint]"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",

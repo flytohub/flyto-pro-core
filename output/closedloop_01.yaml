@@ -1,0 +1,75 @@
+name: Fetch API health check and send Slack notification
+version: 1.0.0
+steps:
+- id: node_1773899466641
+  module: flow.start
+  label: node_1773899466641
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773899466642_0_k4jqu0
+  module: http.get
+  label: node_1773899466642_0_k4jqu0
+  params:
+    url: '{{url}}'
+    headers: {}
+    query: {}
+    timeout: 30
+    verify_ssl: true
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+- id: node_1773899466643_1_nhimx8
+  module: notification.slack.send_message
+  label: node_1773899466643_1_nhimx8
+  params:
+    webhook_url: '{{webhook_url}}'
+    text: ${steps.node_1773899466642_0_k4jqu0.body}
+    channel: ''
+    username: ''
+    icon_emoji: ''
+  positionX: 700
+  positionY: 150
+  orderIndex: 2
+edges:
+- id: e_node_1773899466641_node_1773899466642_0_k4jqu0
+  source: node_1773899466641
+  target: node_1773899466642_0_k4jqu0
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_node_1773899466642_0_k4jqu0_node_1773899466643_1_nhimx8
+  source: node_1773899466642_0_k4jqu0
+  target: node_1773899466643_1_nhimx8
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: URL
+          id: url
+          type: text
+          props:
+            placeholder: https://api.example.com/data
+      - components:
+        - label: Webhook URL
+          id: webhook_url
+          type: text
+          props:
+            placeholder: ${env.SLACK_WEBHOOK_URL}

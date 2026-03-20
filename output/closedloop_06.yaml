@@ -1,0 +1,74 @@
+name: Download a file from URL and save locally
+version: 1.0.0
+steps:
+- id: node_1773899488860
+  module: flow.start
+  label: node_1773899488860
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773899488861_0_5l6v6q
+  module: http.get
+  label: node_1773899488861_0_5l6v6q
+  params:
+    url: '{{url}}'
+    headers: {}
+    query: {}
+    timeout: 30
+    verify_ssl: true
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+- id: node_1773899488862_1_jaimdi
+  module: file.write
+  label: node_1773899488862_1_jaimdi
+  params:
+    path: '{{path}}'
+    content: ${steps.fetch.data.body}
+    encoding: utf-8
+    mode: overwrite
+  positionX: 700
+  positionY: 150
+  orderIndex: 2
+edges:
+- id: e_node_1773899488860_node_1773899488861_0_5l6v6q
+  source: node_1773899488860
+  target: node_1773899488861_0_5l6v6q
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_node_1773899488861_0_5l6v6q_node_1773899488862_1_jaimdi
+  source: node_1773899488861_0_5l6v6q
+  target: node_1773899488862_1_jaimdi
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: URL
+          id: url
+          type: text
+          props:
+            placeholder: https://api.example.com/data
+      - components:
+        - label: File Path
+          id: path
+          type: text
+          props:
+            placeholder: /path/to/file.txt

@@ -7,6 +7,7 @@ Provides:
 - Cost Controller — multi-resource budget management
 - Interfaces — abstract LLM, vector store, quality checker
 - Agent Runtime — verification, observations, project state
+- Factory v2 — recipe-based template generation (requires: flyto-pro-core[factory])
 - Core — DI container, safe access utilities, validators
 """
 

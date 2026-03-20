@@ -1,0 +1,91 @@
+name: Split a list of URLs and fetch each one
+version: 1.0.0
+steps:
+- id: node_1773896854139
+  module: flow.start
+  label: node_1773896854139
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_1773896854140_0_upsh4h
+  module: string.split
+  label: node_1773896854140_0_upsh4h
+  params:
+    text: '{{text}}'
+    delimiter: ' '
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+- id: node_1773896854141_1_ls83wy
+  module: flow.foreach
+  label: node_1773896854141_1_ls83wy
+  params:
+    items: ${steps.node_1773896854140_0_upsh4h.result}
+    item_var: item
+    index_var: index
+    output_mode: collect
+  positionX: 700
+  positionY: 150
+  orderIndex: 2
+  connections:
+    iterate:
+    - node_1773896854142_2_53uamx
+- id: node_1773896854142_2_53uamx
+  module: http.get
+  label: node_1773896854142_2_53uamx
+  params:
+    url: ${loop.item}
+    headers: {}
+    query: {}
+    timeout: 30
+    verify_ssl: true
+  positionX: 700
+  positionY: 400
+  orderIndex: 3
+edges:
+- id: e_node_1773896854139_node_1773896854140_0_upsh4h
+  source: node_1773896854139
+  target: node_1773896854140_0_upsh4h
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_node_1773896854140_0_upsh4h_node_1773896854141_1_ls83wy
+  source: node_1773896854140_0_upsh4h
+  target: node_1773896854141_1_ls83wy
+  sourceHandle: output
+  targetHandle: in
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: loop_iterate_node_1773896854141_1_ls83wy_node_1773896854142_2_53uamx
+  source: node_1773896854141_1_ls83wy
+  target: node_1773896854142_2_53uamx
+  sourceHandle: body_out
+  targetHandle: target-top
+  type: glow
+  data:
+    edgeType: iterate
+    pathType: smoothstep
+  label: Iterate
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 1
+      grid:
+      - 12
+      columnsData:
+      - components:
+        - label: Text
+          id: text
+          type: textarea
+          props:
+            placeholder: Enter text to process...
+            required: true
+            rows: 6
