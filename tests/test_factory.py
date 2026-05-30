@@ -16,6 +16,15 @@ import pytest
 from flyto_pro_core.factory.models import RecipeResult, PipelineResult
 from flyto_pro_core.factory.autofix import autofix_workflow
 
+import importlib.util
+
+# These tests exercise the real flyto-blueprint engine, an optional dependency
+# not present in the [dev] extra. Skip them when it is unavailable.
+requires_blueprint = pytest.mark.skipif(
+    importlib.util.find_spec("flyto_blueprint") is None,
+    reason="requires optional flyto-blueprint dependency",
+)
+
 
 # ============================================================================
 # Model Tests
@@ -98,6 +107,7 @@ class TestAutofix:
 
 class TestSelectBlueprints:
 
+    @requires_blueprint
     def test_select_from_real_engine(self):
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
@@ -116,6 +126,7 @@ class TestSelectBlueprints:
         assert "string_split" in r.blueprints
         assert "foreach_loop" in r.blueprints
 
+    @requires_blueprint
     def test_browser_filter(self):
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
@@ -213,6 +224,7 @@ class TestResolveRecipe:
 
 class TestGenerateV2:
 
+    @requires_blueprint
     @pytest.mark.asyncio
     async def test_generate_v2_with_real_engine(self):
         from flyto_blueprint import BlueprintEngine
@@ -229,6 +241,7 @@ class TestGenerateV2:
         assert len(result.steps) >= 1
         assert any(s["module"] == "image.qrcode_generate" for s in result.steps)
 
+    @requires_blueprint
     @pytest.mark.asyncio
     async def test_generate_v2_split_and_qr(self):
         from flyto_blueprint import BlueprintEngine
@@ -246,6 +259,7 @@ class TestGenerateV2:
         assert "string.split" in modules
         assert "image.qrcode_generate" in modules
 
+    @requires_blueprint
     @pytest.mark.asyncio
     async def test_generate_v2_no_match(self):
         from flyto_blueprint import BlueprintEngine

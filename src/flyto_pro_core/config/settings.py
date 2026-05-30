@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -33,7 +33,7 @@ def _get_env(key: str, default: Any = None, cast_type: type = str) -> Any:
     value = os.getenv(key, default)
     if value is None:
         return None
-    if cast_type == bool:
+    if cast_type is bool:
         return str(value).lower() in ("true", "1", "yes", "on")
     try:
         return cast_type(value)
@@ -279,7 +279,7 @@ class Settings:
         settings = cls()
         if config_path.exists():
             with open(config_path) as f:
-                yaml_config = yaml.safe_load(f) or {}
+                _yaml_config = yaml.safe_load(f) or {}
             # YAML values are used as fallbacks; env vars take precedence
             # Implementation can be extended as needed
         return settings

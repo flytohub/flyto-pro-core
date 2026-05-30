@@ -45,7 +45,7 @@ import re
 
 from .port import Port, PortDirection, EdgeType
 from .params_schema import ParamsSchema, ParamDef
-from .data_contract import DataContract, DataType
+from .data_contract import DataContract
 
 
 @dataclass

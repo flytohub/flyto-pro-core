@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from .contract_meta import ContractMeta
-from .plan_contract import Assertion, PlanContract
+from .plan_contract import PlanContract
 
 
 class ProposalStatus(Enum):

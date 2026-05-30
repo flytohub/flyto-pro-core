@@ -14,12 +14,12 @@ Phase 3 (enrichment: layout, edges, _ui) happens in flyto-cloud.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from .models import PipelineResult
 from .recipe import resolve_recipe
 from .selector import select_blueprints
-from .autofix import autofix_workflow
 
 # Output type hints for type-aware wiring
 _DICT_OUTPUT_MODULES = {"http.get", "http.request", "http.paginate"}
@@ -108,7 +108,7 @@ def _sanitize_recipe_args(
     for idx, bp_id in enumerate(blueprint_ids):
         bp = blueprints.get(bp_id, {})
         # Use unique key for duplicate bp_ids (e.g. two string_splits)
-        key = bp_id if bp_id not in sanitized else f"{bp_id}_{idx}"
+        _key = bp_id if bp_id not in sanitized else f"{bp_id}_{idx}"
         bp_args = dict(args.get(bp_id, {}))
         wired_one = False
 
@@ -176,7 +176,7 @@ async def generate_v2(
             return PipelineResult(ok=False, error="flyto-blueprint not installed")
 
     try:
-        from flyto_blueprint.compose import compose_chain
+        from flyto_blueprint.compose import compose_chain  # noqa: F401  (availability probe)
     except ImportError:
         return PipelineResult(ok=False, error="flyto-blueprint not installed")
 
@@ -314,8 +314,6 @@ def _validate_workflow(
 # ---------------------------------------------------------------------------
 # Post-processing helpers
 # ---------------------------------------------------------------------------
-
-import re
 
 _STEP_REF_RE = re.compile(r"\$\{steps\.(\w+)\.")
 _STEPS_PREFIX_RE = re.compile(r"\$\{steps\.(\w+)\.(.+?)\}")

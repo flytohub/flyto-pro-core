@@ -21,6 +21,7 @@ __all__ = [
     "RecipeResult",
     "PipelineResult",
     "resolve_recipe",
+    "select_blueprints",
     "autofix_workflow",
     "generate_v2",
 ]

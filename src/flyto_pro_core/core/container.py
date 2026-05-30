@@ -29,7 +29,7 @@ Usage:
 import logging
 import threading
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, TypeVar, Generic
+from typing import Any, Callable, Dict, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 

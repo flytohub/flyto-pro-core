@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from .models import RecipeResult
 
@@ -52,7 +52,7 @@ def _parse_llm_json(text: str) -> Optional[dict]:
     # Strip markdown code fences
     if content.startswith("```"):
         lines = content.split("\n")
-        lines = [l for l in lines if not l.strip().startswith("```")]
+        lines = [ln for ln in lines if not ln.strip().startswith("```")]
         content = "\n".join(lines).strip()
     # Try to extract JSON object
     match = re.search(r"\{.*\}", content, re.DOTALL)
@@ -140,7 +140,7 @@ async def resolve_recipe(
         return RecipeResult(ok=False, error=f"Failed to parse LLM response: {response_text[:200]}")
 
     raw_blueprints = parsed.get("blueprints", [])
-    raw_args = parsed.get("args", {})
+    _raw_args = parsed.get("args", {})
 
     if not raw_blueprints or not isinstance(raw_blueprints, list):
         return RecipeResult(ok=False, error="LLM returned no blueprints")

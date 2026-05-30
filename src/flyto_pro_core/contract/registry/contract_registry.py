@@ -25,14 +25,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 from pathlib import Path
 import json
 
-from ..models.module_contract import ModuleContract, ConnectionPolicy
-from ..models.port import Port, PortDirection, EdgeType
-from ..models.params_schema import ParamsSchema
-from ..models.data_contract import DataContract
+from ..models.module_contract import ModuleContract
+from ..models.port import Port
 
 logger = logging.getLogger(__name__)
 

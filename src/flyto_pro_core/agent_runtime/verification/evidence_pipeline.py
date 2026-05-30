@@ -309,7 +309,7 @@ class EvidencePipeline:
     ) -> DerivedEvidence:
         """Query DOM elements."""
         selector = config.get("selector", "")
-        attribute = config.get("attribute", "text")
+        _attribute = config.get("attribute", "text")
 
         # Parse HTML and query
         # Placeholder implementation
@@ -378,7 +378,7 @@ class EvidencePipeline:
         config: Dict[str, Any],
     ) -> DerivedEvidence:
         """Validate JSON against schema."""
-        schema = config.get("schema", {})
+        _schema = config.get("schema", {})
 
         try:
             data = json.loads(raw.raw_data.decode("utf-8"))

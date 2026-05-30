@@ -48,7 +48,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +158,7 @@ class ParamDef:
         # Required check
         if value is None or value == "":
             if self.required:
-                return False, f"Parameter is required"
+                return False, "Parameter is required"
             return True, None
 
         # Type checking

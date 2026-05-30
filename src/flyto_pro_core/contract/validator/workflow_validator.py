@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from ..models.workflow_spec import WorkflowSpec, NodeSpec, EdgeSpec
 from ..models.module_contract import ModuleContract
-from ..models.port import Port, PortDirection, EdgeType
+from ..models.port import PortDirection, EdgeType
 from ..registry.contract_registry import ContractRegistry
 
 logger = logging.getLogger(__name__)

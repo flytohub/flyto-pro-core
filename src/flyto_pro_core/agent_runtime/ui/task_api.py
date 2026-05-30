@@ -7,12 +7,11 @@ Provides endpoints for:
 - Task CRUD operations
 """
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..project.goal_task_step import Goal, Task, TaskStatus, Step, StepStatus
+from ..project.goal_task_step import Goal, Task, TaskStatus, Step
 
 
 @dataclass

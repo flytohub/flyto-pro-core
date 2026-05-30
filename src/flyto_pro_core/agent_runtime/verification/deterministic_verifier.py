@@ -10,17 +10,16 @@ import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 from ..contracts.plan_contract import Assertion, AssertionLevel, AssertionType
 from ..observation.observation_packet import ObservationPacket
-from .evidence_pipeline import DerivedEvidence, EvidencePipeline, get_evidence_pipeline
+from .evidence_pipeline import EvidencePipeline, get_evidence_pipeline
 from .verification_report import (
     AssertionResult,
     Evidence,
     FailureAnalysis,
     VerificationReport,
-    VerificationRules,
 )
 
 logger = logging.getLogger(__name__)
@@ -581,7 +580,7 @@ class DeterministicVerifier:
             r for r in failed_results if "browser" in r.expression
         ]
         db_failures = [r for r in failed_results if "database" in r.expression]
-        file_failures = [r for r in failed_results if "filesystem" in r.expression]
+        _file_failures = [r for r in failed_results if "filesystem" in r.expression]
 
         if browser_failures and observation.browser:
             if observation.browser.console_errors:

@@ -5,7 +5,6 @@ Without contract versioning, Agent will "die old" - unable to evolve.
 """
 
 import hashlib
-import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime

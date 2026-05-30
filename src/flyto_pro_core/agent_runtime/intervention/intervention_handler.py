@@ -7,7 +7,7 @@ Handles the flow of intervention requests and responses.
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Awaitable
 
@@ -16,9 +16,7 @@ from .intervention_types import (
     InterventionPriority,
     InterventionRequest,
     InterventionResponse,
-    InterventionType,
 )
-from ..contracts.decision_card import DecisionCard
 
 logger = logging.getLogger(__name__)
 

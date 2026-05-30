@@ -10,8 +10,7 @@ This adapter wraps the existing AgentLoop to add:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..contracts import (
     PlanContract,
@@ -28,13 +27,11 @@ from ..observation import (
 from ..verification import (
     DeterministicVerifier,
     VerificationReport,
-    get_evidence_pipeline,
 )
 from ..project import (
     Goal,
     Task,
     Step,
-    StepStatus,
     ProjectStateManager,
 )
 from ..ems import (

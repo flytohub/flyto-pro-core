@@ -9,7 +9,7 @@ No LLM. Uses BlueprintEngine.search() + heuristic composition.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 
 from .models import RecipeResult
 

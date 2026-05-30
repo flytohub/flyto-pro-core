@@ -12,6 +12,10 @@ from __future__ import annotations
 import pytest
 import yaml
 
+# Skip the whole module when the optional flyto-blueprint dep is absent
+# (these are real end-to-end integration tests; the dep is not in [dev]).
+pytest.importorskip("flyto_blueprint")
+
 from flyto_blueprint import BlueprintEngine
 from flyto_blueprint.storage.memory import MemoryBackend
 from flyto_pro_core.factory.pipeline import generate_v2

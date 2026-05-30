@@ -5,7 +5,7 @@ Provides safe access patterns for lists, dicts, and nested structures.
 Use these utilities instead of direct [0] access.
 """
 
-from typing import Any, Dict, List, Optional, TypeVar, Callable
+from typing import Any, Dict, List, Optional, TypeVar
 
 T = TypeVar("T")
 

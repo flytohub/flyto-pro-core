@@ -43,9 +43,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-from ..models.workflow_spec import WorkflowSpec, NodeSpec, EdgeSpec
-from ..models.module_contract import ModuleContract
-from ..models.port import Port, EdgeType
+from ..models.workflow_spec import WorkflowSpec
+from ..models.port import EdgeType
 from ..models.data_contract import DataContract, DataType
 from ..registry.contract_registry import ContractRegistry
 

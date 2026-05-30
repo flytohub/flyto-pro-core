@@ -27,16 +27,16 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from ..models.workflow_spec import WorkflowSpec, NodeSpec, EdgeSpec
+from ..models.workflow_spec import WorkflowSpec, NodeSpec
 from ..models.module_contract import ModuleContract
-from ..models.port import Port, PortDirection, EdgeType
+from ..models.port import PortDirection
 from ..models.execution_result import ExecutionEvent
 from ..registry.contract_registry import ContractRegistry
 from ..validator.workflow_validator import WorkflowValidator, ValidationReport
-from ..binder.binding_resolver import BindingResolver, BindingTree
+from ..binder.binding_resolver import BindingResolver
 
 logger = logging.getLogger(__name__)
 

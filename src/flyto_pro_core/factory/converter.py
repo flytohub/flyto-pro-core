@@ -11,8 +11,7 @@ No LLM. No blueprint search. Pure deterministic conversion.
 
 from __future__ import annotations
 
-import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 # Module output type hints
 _DICT_OUTPUT = {"http.get", "http.request", "http.webhook_wait", "http.paginate"}

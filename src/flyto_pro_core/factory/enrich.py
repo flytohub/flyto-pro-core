@@ -198,7 +198,7 @@ def _generate_edges(
 
     for i in range(len(main_ids) - 1):
         src, tgt = main_ids[i], main_ids[i + 1]
-        src_step = next((s for s in steps if s["id"] == src), {})
+        _src_step = next((s for s in steps if s["id"] == src), {})
 
         # Skip foreach nodes (they use connections.iterate, not sequential to body)
         if src in foreach_body_map:

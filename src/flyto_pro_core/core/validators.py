@@ -7,7 +7,7 @@ and ensure consistent error handling across the codebase.
 
 import re
 import logging
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Type, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 

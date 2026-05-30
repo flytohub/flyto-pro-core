@@ -6,14 +6,12 @@ Translates technical decisions into user-friendly cards.
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 from ..contracts.decision_card import (
     DecisionCard,
     DecisionOption,
     DecisionContext,
-    UserDecision,
 )
 from .intervention_types import (
     InterventionOption,

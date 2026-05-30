@@ -7,7 +7,7 @@ language that non-technical stakeholders can understand.
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -401,7 +401,7 @@ class TechDecisionTranslator:
     ) -> Dict[str, str]:
         """Translate deployment action."""
         target = data.get("target", "production")
-        action = data.get("action", "deploy")
+        _action = data.get("action", "deploy")
 
         title = f"Deploy to {target}"
         description = f"Publish changes to {target} environment"
