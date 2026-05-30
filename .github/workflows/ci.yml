@@ -1,0 +1,71 @@
+name: CI
+
+# Engineering Baseline Standard (FLYA-11) — Python stack.
+# ruff + mypy + pytest + pip-audit on every PR and every push to main.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip
+      - run: pip install ruff mypy
+      # ruff config lives in pyproject.toml (line-length 88, py39 target).
+      - name: ruff
+        run: ruff check src/
+      # Advisory until the package is fully type-annotated — the repo has
+      # no mypy config yet, so this surfaces typing debt without blocking
+      # baseline rollout. Promote to a hard gate once src/ is clean.
+      - name: mypy (advisory)
+        run: mypy src/ --ignore-missing-imports
+        continue-on-error: true
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: pip install ".[dev]"
+      - name: pytest
+        run: pytest tests/ -v
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip pip-audit
+      - run: pip install .
+      # Informational — audits the resolved dependency tree. Reserved as
+      # a hard gate for published packages (FLYA-11 checklist item 6).
+      - name: pip-audit
+        run: pip-audit

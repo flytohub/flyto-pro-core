@@ -1,0 +1,4 @@
+# Engineering Baseline Standard (FLYA-11) — checklist item 8.
+# Default owner for all paths. Code-owner review is advisory until the
+# org enables `require_code_owner_reviews` in branch protection.
+* @ChesterHsu
