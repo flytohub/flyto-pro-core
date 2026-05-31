@@ -62,7 +62,7 @@ SCENARIOS = [
     },
     {
         "description": "Generate a QR code from a URL",
-        "params": {"data": "https://flyto2.com"},
+        "params": {"data": "https://flyto.io"},
     },
     {
         "description": "Split text by newline and process each line",
