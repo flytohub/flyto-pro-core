@@ -1,6 +1,6 @@
 # flyto-pro-core
 
-Open-source foundation for [Flyto](https://flyto.io) — workflow validation, cost control, agent runtime, and provider interfaces.
+Open-source foundation for [Flyto2](https://flyto.io) — workflow validation, cost control, agent runtime, and provider interfaces.
 
 ## What's Inside
 
@@ -127,7 +127,7 @@ flyto-pro-core (this package, Apache-2.0)
 └── config/          → Settings, constants
 ```
 
-## Relationship to Flyto Ecosystem
+## Relationship to Flyto2 Ecosystem
 
 ```
 flyto-pro-core (open source)     flyto-pro (proprietary)

@@ -1,5 +1,5 @@
 """
-Flyto Directory - .flyto/ directory structure management.
+Flyto2 Directory - .flyto/ directory structure management.
 
 Standard structure:
 .flyto/
@@ -98,7 +98,7 @@ class FlytoDirectory:
             gitignore_path = os.path.join(self.flyto_path, ".gitignore")
             if not os.path.exists(gitignore_path):
                 with open(gitignore_path, "w") as f:
-                    f.write("# Flyto local files\n")
+                    f.write("# Flyto2 local files\n")
                     f.write("cache/\n")
                     f.write("logs/\n")
                     f.write("*.log\n")

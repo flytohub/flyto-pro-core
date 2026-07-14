@@ -1,5 +1,5 @@
 """
-Flyto Agent Runtime
+Flyto2 Agent Runtime
 
 AI Kernel for deterministic execution and verification.
 LLM is User space, Runtime is Kernel space.

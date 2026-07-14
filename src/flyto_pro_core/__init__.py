@@ -1,6 +1,6 @@
-# Copyright 2024 Flyto
+# Copyright 2024 Flyto2
 # Licensed under the Apache License, Version 2.0
-"""flyto-pro-core — Open-source foundation for Flyto Pro.
+"""flyto-pro-core — Open-source foundation for Flyto2 Pro.
 
 Provides:
 - Contract Engine — workflow validation, binding resolution, compilation

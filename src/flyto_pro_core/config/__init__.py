@@ -1,5 +1,5 @@
 """
-Centralized Configuration System for Flyto Pro
+Centralized Configuration System for Flyto2 Pro
 
 This module provides a unified configuration management system that:
 - Loads configuration from environment variables and YAML files

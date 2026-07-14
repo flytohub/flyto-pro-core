@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "flyto-pro-core"
 version = "0.1.1"
-description = "Open-source core for Flyto Pro — contracts, cost control, interfaces, and agent runtime"
+description = "Open-source core for Flyto2 Pro — contracts, cost control, interfaces, and agent runtime"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.9"
 authors = [
-    {name = "Flyto Team", email = "team@flyto.io"}
+    {name = "Flyto2 Team", email = "team@flyto.io"}
 ]
 keywords = [
     "workflow", "automation", "contracts", "validation",
