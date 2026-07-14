@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.9"
 authors = [
-    {name = "Flyto2 Team", email = "team@flyto.io"}
+    {name = "Flyto2 Team", email = "team@flyto2.com"}
 ]
 keywords = [
     "workflow", "automation", "contracts", "validation",

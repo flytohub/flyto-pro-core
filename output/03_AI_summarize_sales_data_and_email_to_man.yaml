@@ -92,7 +92,7 @@ _ui:
           id: to
           type: text
           props:
-            placeholder: recipient@example.com
+            placeholder: recipient@flyto2.com
       - components:
         - label: Subject
           id: subject
