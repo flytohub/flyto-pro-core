@@ -41,8 +41,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/flytohub/flyto-pro-core"
+Homepage = "https://flyto2.com"
+Documentation = "https://docs.flyto2.com"
 Repository = "https://github.com/flytohub/flyto-pro-core.git"
+Issues = "https://github.com/flytohub/flyto-pro-core/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/flyto_pro_core"]
