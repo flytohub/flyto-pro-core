@@ -225,7 +225,7 @@ class LicenseSettings:
 
     server_url: str = field(
         default_factory=lambda: _get_env(
-            "LICENSE_SERVER_URL", "https://license.flyto.io/api/v1"
+            "LICENSE_SERVER_URL", "https://license.flyto2.com/api/v1"
         )
     )
     timeout: int = field(default_factory=lambda: TIMEOUT_CONFIG["license_check"])

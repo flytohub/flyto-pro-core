@@ -9,20 +9,27 @@ Generates real YAML files to /tmp/factory_v2_output/ for manual inspection.
 from __future__ import annotations
 
 import json
-import os
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import yaml
 
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_WORKSPACE_ROOT = _REPO_ROOT.parent
+for _path in (_REPO_ROOT / "src", _WORKSPACE_ROOT / "flyto-blueprint"):
+    _path_str = str(_path)
+    if _path_str not in sys.path:
+        sys.path.insert(0, _path_str)
+
 # Skip the whole module when the optional flyto-blueprint dep is absent
 # (these are real end-to-end integration tests; the dep is not in [dev]).
 pytest.importorskip("flyto_blueprint")
 
-from flyto_blueprint import BlueprintEngine
-from flyto_blueprint.storage.memory import MemoryBackend
-from flyto_pro_core.factory.pipeline import generate_v2
+from flyto_blueprint import BlueprintEngine  # noqa: E402
+from flyto_blueprint.storage.memory import MemoryBackend  # noqa: E402
+from flyto_pro_core.factory.pipeline import generate_v2  # noqa: E402
 
 OUTPUT_DIR = Path("/tmp/factory_v2_output")
 
@@ -62,21 +69,19 @@ def _save(name, result):
 
 
 @pytest.mark.asyncio
-async def test_qrcode_pipeline(engine):
+async def test_api_fetch_save_pipeline(engine):
     result = await generate_v2(
-        description="批量生成 QR code",
+        description="Fetch Flyto2 homepage and save the response",
         blueprint_engine=engine,
         llm=_mock_llm({
-            "blueprints": ["string_split", "foreach_loop", "qrcode_generate"],
+            "blueprints": ["api_fetch_save"],
             "args": {
-                "string_split": {"text": "https://flyto.io\nhttps://github.com/flytohub", "delimiter": "\n"},
-                "foreach_loop": {"items": "${steps.split_text.data.result}", "module": "image.qrcode_generate"},
-                "qrcode_generate": {"content": "${steps.loop.data.item}"},
+                "api_fetch_save": {"url": "https://flyto2.com", "path": "/tmp/flyto2-homepage.json"},
             },
         }),
     )
     assert result.ok, result.error
-    _save("批量生成_QR_code", result)
+    _save("fetch_flyto2_homepage_save_response", result)
 
 
 @pytest.mark.asyncio

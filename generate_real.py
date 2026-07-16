@@ -13,8 +13,9 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 # Load .env from flyto-pro
-import os
 env_path = Path(__file__).resolve().parent.parent / "flyto-pro" / ".env"
 if env_path.exists():
     for line in env_path.read_text().splitlines():
@@ -28,12 +29,10 @@ _base = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_base / "flyto-core"))
 sys.path.insert(0, str(_base / "flyto-pro"))
 
-from flyto_blueprint import BlueprintEngine
-from flyto_blueprint.storage.memory import MemoryBackend
-from flyto_pro_core.factory.pipeline import generate_v2
-from flyto_pro_core.interfaces.providers.openai_llm import OpenAILLMService
-
-import yaml
+from flyto_blueprint import BlueprintEngine  # noqa: E402
+from flyto_blueprint.storage.memory import MemoryBackend  # noqa: E402
+from flyto_pro_core.factory.pipeline import generate_v2  # noqa: E402
+from flyto_pro_core.interfaces.providers.openai_llm import OpenAILLMService  # noqa: E402
 
 OUTPUT_DIR = Path(__file__).parent / "output"
 
@@ -59,7 +58,7 @@ async def main():
     print(f"Output dir: {OUTPUT_DIR}\n")
 
     engine = BlueprintEngine(storage=MemoryBackend())
-    llm = OpenAILLMService(model="gpt-4o")
+    _llm = OpenAILLMService(model="gpt-4o")
 
     print(f"Loaded {len(engine._blueprints)} blueprints")
 
@@ -86,16 +85,9 @@ async def main():
 
     # SandboxExecutor for post-generation validation
     sandbox = None
-    validator = None
     try:
         from src.pro.factory.sandbox import SandboxExecutor
         sandbox = SandboxExecutor.from_registry()
-
-        async def _validate(workflow):
-            r = await sandbox.execute(workflow)
-            return r.success, r.errors
-
-        validator = _validate
         print("SandboxExecutor: available (will validate)\n")
     except ImportError:
         print("SandboxExecutor: not available (skipping validation)\n")
@@ -131,9 +123,9 @@ async def main():
             }
             sr = await sandbox.execute(pre_workflow)
             if sr.success:
-                print(f"  ✓ SANDBOX PASS")
+                print("  ✓ SANDBOX PASS")
             else:
-                print(f"  ✗ SANDBOX FAIL:")
+                print("  ✗ SANDBOX FAIL:")
                 for err in sr.errors:
                     print(f"    - {err}")
 

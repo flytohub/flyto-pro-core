@@ -9,7 +9,6 @@ Usage:
 """
 
 import asyncio
-import json
 import os
 import sys
 import time
@@ -62,7 +61,7 @@ SCENARIOS = [
     },
     {
         "description": "Generate a QR code from a URL",
-        "params": {"data": "https://flyto.io"},
+        "params": {"data": "https://flyto2.com"},
     },
     {
         "description": "Split text by newline and process each line",
@@ -217,7 +216,7 @@ async def main():
             poll = await poll_execution(session, exec_id)
             status = poll.get("status", "unknown")
             if poll["ok"]:
-                print(f"COMPLETED")
+                print("COMPLETED")
                 results.append({"scenario": desc, "ok": True, "execution_id": exec_id})
             else:
                 print(f"FAIL (status={status})")
