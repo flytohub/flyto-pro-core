@@ -1,6 +1,6 @@
 # flyto-pro-core
 
-Open-source foundation for [Flyto2](https://flyto.io) — workflow validation, cost control, agent runtime, and provider interfaces.
+Open-source foundation for [Flyto2](https://flyto2.com) — workflow validation, cost control, agent runtime, and provider interfaces.
 
 ## What's Inside
 
