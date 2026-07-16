@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "flyto-pro-core"
-version = "0.1.1"
+version = "0.1.2"
 description = "Open-source core for Flyto2 Pro — contracts, cost control, interfaces, and agent runtime"
 readme = "README.md"
 license = "Apache-2.0"
