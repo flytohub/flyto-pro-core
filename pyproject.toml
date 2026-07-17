@@ -15,6 +15,7 @@ authors = [
 keywords = [
     "workflow", "automation", "contracts", "validation",
     "agent-runtime", "cost-control", "interfaces",
+    "ai-workflow-automation", "enterprise-automation", "flyto2",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -45,6 +46,10 @@ Homepage = "https://flyto2.com"
 Documentation = "https://docs.flyto2.com"
 Repository = "https://github.com/flytohub/flyto-pro-core.git"
 Issues = "https://github.com/flytohub/flyto-pro-core/issues"
+Changelog = "https://github.com/flytohub/flyto-pro-core/blob/main/CHANGELOG.md"
+Security = "https://github.com/flytohub/flyto-pro-core/blob/main/SECURITY.md"
+Blog = "https://blog.flyto2.com/posts/ai-workflow-automation-alternatives"
+Examples = "https://docs.flyto2.com/core/"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/flyto_pro_core"]
