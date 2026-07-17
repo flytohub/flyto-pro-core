@@ -1,6 +1,24 @@
-# flyto-pro-core
+# Flyto2 Pro Core
 
-Open-source foundation for [Flyto2](https://flyto2.com) — workflow validation, cost control, agent runtime, and provider interfaces.
+[![PyPI](https://img.shields.io/pypi/v/flyto-pro-core.svg)](https://pypi.org/project/flyto-pro-core/)
+[![Python](https://img.shields.io/pypi/pyversions/flyto-pro-core.svg)](https://pypi.org/project/flyto-pro-core/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Website](https://img.shields.io/badge/website-flyto2.com-8B5CF6)](https://flyto2.com)
+
+Open-source foundation for [Flyto2](https://flyto2.com) commercial-grade
+automation: workflow contract validation, deterministic agent runtime, budget
+and token metering, provider interfaces, project state, and evidence-backed
+verification.
+
+Use Flyto2 Pro Core when you need bring-your-own LLM providers, Qdrant/OpenAI
+integrations, budget enforcement, deterministic workflow validation, or a clean
+boundary between Apache-2.0 runtime primitives and private enterprise modules.
+
+Official links: [flyto2.com](https://flyto2.com) ·
+[Docs](https://docs.flyto2.com) ·
+[flyto-core](https://github.com/flytohub/flyto-core) ·
+[flyto-indexer](https://github.com/flytohub/flyto-indexer) ·
+[Security](mailto:security@flyto2.com)
 
 ## What's Inside
 
@@ -27,7 +45,7 @@ pip install flyto-pro-core[qdrant]    # Qdrant vector store
 pip install flyto-pro-core[full]      # All providers
 ```
 
-## Quick Start
+## Usage
 
 ### Contract Engine — Validate Workflows
 
@@ -156,6 +174,19 @@ Optional:
 - `openai >= 1.0.0` (for OpenAI provider)
 - `qdrant-client >= 1.7.0` (for Qdrant provider)
 - `flyto-core >= 1.5.3` (for contract catalog loading)
+
+## Testing
+
+```bash
+python -m pytest
+python -m ruff check .
+```
+
+## Contributing
+
+Pull requests are welcome for contract validation, budget controls, provider
+interfaces, deterministic verification, docs, and examples. Security reports
+should go to `security@flyto2.com`.
 
 ## License
 
