@@ -13,11 +13,22 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs" / "documentation-manifest.json"
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 SKIP_PARTS = {".flyto-index", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
+NON_DOCUMENTATION_KEYS = {
+    "configuration_not_applicable",
+    "module_roots",
+    "source_reference_exclude",
+}
 
 
 def documentation_paths(manifest: dict) -> Iterator[str]:
     """Yield every documentation path declared by the manifest."""
-    yield from manifest["documentation"].values()
+    for key, value in manifest["documentation"].items():
+        if key in NON_DOCUMENTATION_KEYS:
+            continue
+        if isinstance(value, str):
+            yield value
+        elif isinstance(value, list):
+            yield from (item for item in value if isinstance(item, str))
     for area in manifest["source_areas"]:
         yield from area["documentation"]
     for feature in manifest["feature_surfaces"]:
