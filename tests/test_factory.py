@@ -9,7 +9,7 @@ Tests for: models, autofix, resolve_recipe, select_blueprints, converter, genera
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -32,21 +32,26 @@ requires_blueprint = pytest.mark.skipif(
 
 
 class TestRecipeResult:
+    """Tests for RecipeResult behavior."""
 
     def test_success(self):
+        """Verify success."""
         r = RecipeResult(ok=True, blueprints=["a", "b"], args={"a": {"x": 1}})
         assert r.ok is True
         d = r.to_dict()
         assert d["blueprints"] == ["a", "b"]
 
     def test_failure(self):
+        """Verify failure."""
         r = RecipeResult(ok=False, error="no blueprints")
         assert r.ok is False
 
 
 class TestPipelineResult:
+    """Tests for PipelineResult behavior."""
 
     def test_success(self):
+        """Verify success."""
         r = PipelineResult(
             ok=True,
             steps=[{"id": "s1", "module": "http.get"}],
@@ -58,6 +63,7 @@ class TestPipelineResult:
         assert len(d["steps"]) == 1
 
     def test_failure(self):
+        """Verify failure."""
         r = PipelineResult(ok=False, error="fail")
         assert r.to_dict()["error"] == "fail"
 
@@ -68,34 +74,75 @@ class TestPipelineResult:
 
 
 class TestAutofix:
+    """Tests for Autofix behavior."""
 
     def test_fix_module_typo(self):
-        workflow = {"steps": [{"id": "s1", "module": "http.ger", "params": {"url": "http://x.com"}}]}
-        fixed, remaining = autofix_workflow(workflow, ["Unknown module 'http.ger'"], {"http.get", "http.post"})
+        """Verify fix module typo."""
+        workflow = {
+            "steps": [
+                {"id": "s1", "module": "http.ger", "params": {"url": "http://x.com"}}
+            ]
+        }
+        fixed, remaining = autofix_workflow(
+            workflow, ["Unknown module 'http.ger'"], {"http.get", "http.post"}
+        )
         assert len(remaining) == 0
         assert fixed["steps"][0]["module"] == "http.get"
 
     def test_fix_variable_ref_typo(self):
-        workflow = {"steps": [
-            {"id": "fetch", "module": "http.get", "params": {"url": "http://x.com"}},
-            {"id": "notify", "module": "slack.send", "params": {"text": "${steps.ftch.data.body}"}},
-        ]}
-        fixed, remaining = autofix_workflow(workflow, ["invalid variable reference: unknown step 'ftch'"], {"http.get", "slack.send"})
+        """Verify fix variable ref typo."""
+        workflow = {
+            "steps": [
+                {
+                    "id": "fetch",
+                    "module": "http.get",
+                    "params": {"url": "http://x.com"},
+                },
+                {
+                    "id": "notify",
+                    "module": "slack.send",
+                    "params": {"text": "${steps.ftch.data.body}"},
+                },
+            ]
+        }
+        fixed, remaining = autofix_workflow(
+            workflow,
+            ["invalid variable reference: unknown step 'ftch'"],
+            {"http.get", "slack.send"},
+        )
         assert len(remaining) == 0
         assert "${steps.fetch.data.body}" in fixed["steps"][1]["params"]["text"]
 
     def test_fix_missing_param_with_schema_default(self):
-        workflow = {"steps": [{"id": "s1", "module": "http.get", "params": {"url": "http://x.com"}}]}
-        schemas = {"http.get": {"properties": {"timeout": {"type": "number", "default": 30}}}}
-        fixed, remaining = autofix_workflow(workflow, ["Missing required parameter 'timeout' in step 's1'"], {"http.get"}, params_schemas=schemas)
+        """Verify fix missing param with schema default."""
+        workflow = {
+            "steps": [
+                {"id": "s1", "module": "http.get", "params": {"url": "http://x.com"}}
+            ]
+        }
+        schemas = {
+            "http.get": {"properties": {"timeout": {"type": "number", "default": 30}}}
+        }
+        fixed, remaining = autofix_workflow(
+            workflow,
+            ["Missing required parameter 'timeout' in step 's1'"],
+            {"http.get"},
+            params_schemas=schemas,
+        )
         assert len(remaining) == 0
         assert fixed["steps"][0]["params"]["timeout"] == 30
 
     def test_unfixable_error_remains(self):
-        _, remaining = autofix_workflow({"steps": [{"id": "s1", "module": "x", "params": {}}]}, ["Something unknown"], {"http.get"})
+        """Verify unfixable error remains."""
+        _, remaining = autofix_workflow(
+            {"steps": [{"id": "s1", "module": "x", "params": {}}]},
+            ["Something unknown"],
+            {"http.get"},
+        )
         assert len(remaining) == 1
 
     def test_empty_steps(self):
+        """Verify empty steps."""
         _, remaining = autofix_workflow({"steps": []}, ["error"], set())
         assert len(remaining) == 1
 
@@ -106,28 +153,36 @@ class TestAutofix:
 
 
 class TestSelectBlueprints:
+    """Tests for SelectBlueprints behavior."""
 
     @requires_blueprint
     def test_select_from_real_engine(self):
+        """Verify select from real engine."""
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
         from flyto_pro_core.factory.selector import select_blueprints
 
         engine = BlueprintEngine(storage=MemoryBackend())
 
-        # Simple single-blueprint
-        r = select_blueprints("Generate a QR code", engine)
+        # Simple single-blueprint from the current catalog.
+        r = select_blueprints("HTTP GET request", engine)
         assert r.ok
-        assert "qrcode_generate" in r.blueprints
+        assert r.blueprints == ["api_get"]
 
-        # Multi-blueprint with foreach
-        r = select_blueprints("Split text and generate QR for each", engine)
+        # Multi-intent request selects one direct blueprint for each intent.
+        r = select_blueprints(
+            "Health check a website and send Slack notification", engine
+        )
         assert r.ok
-        assert "string_split" in r.blueprints
-        assert "foreach_loop" in r.blueprints
+        assert r.blueprints == ["monitor_http", "notify_slack"]
+
+        # An unsupported request must not silently return an unrelated recipe.
+        r = select_blueprints("Generate a QR code", engine)
+        assert r.ok is False
 
     @requires_blueprint
     def test_browser_filter(self):
+        """Verify browser filter."""
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
         from flyto_pro_core.factory.selector import select_blueprints
@@ -147,8 +202,10 @@ class TestSelectBlueprints:
 
 
 class TestConverter:
+    """Tests for Converter behavior."""
 
     def test_modules_to_workflow(self):
+        """Verify modules to workflow."""
         from flyto_pro_core.factory.converter import modules_to_workflow
 
         wf = modules_to_workflow(
@@ -162,6 +219,7 @@ class TestConverter:
         assert len(wf["edges"]) == 2
 
     def test_params_wiring(self):
+        """Verify params wiring."""
         from flyto_pro_core.factory.converter import modules_to_workflow
 
         wf = modules_to_workflow(modules=["http.get", "slack.send"])
@@ -172,6 +230,7 @@ class TestConverter:
         assert "{{webhook_url}}" == slack_params.get("webhook_url", "")
 
     def test_string_template_has_variables(self):
+        """Verify string template has variables."""
         from flyto_pro_core.factory.converter import modules_to_workflow
 
         wf = modules_to_workflow(modules=["string.template"])
@@ -184,21 +243,33 @@ class TestConverter:
 
 
 class TestResolveRecipe:
+    """Tests for ResolveRecipe behavior."""
 
     @pytest.mark.asyncio
     async def test_resolve_recipe_success(self):
+        """Verify resolve recipe success."""
         from flyto_pro_core.factory.recipe import resolve_recipe
 
         engine = MagicMock()
         engine.list_blueprints.return_value = [
-            {"id": "string_split", "description": "Split text", "args": {"text": {"required": True}}},
-            {"id": "qrcode_generate", "description": "Generate QR", "args": {"data": {"required": True}}},
+            {
+                "id": "string_split",
+                "description": "Split text",
+                "args": {"text": {"required": True}},
+            },
+            {
+                "id": "qrcode_generate",
+                "description": "Generate QR",
+                "args": {"data": {"required": True}},
+            },
         ]
         engine.search.return_value = []
 
         mock_llm = MagicMock()
         mock_response = MagicMock()
-        mock_response.content = json.dumps({"blueprints": ["string_split", "qrcode_generate"]})
+        mock_response.content = json.dumps(
+            {"blueprints": ["string_split", "qrcode_generate"]}
+        )
         mock_llm.chat = AsyncMock(return_value=mock_response)
 
         result = await resolve_recipe("generate QR codes", engine, llm=mock_llm)
@@ -208,6 +279,7 @@ class TestResolveRecipe:
 
     @pytest.mark.asyncio
     async def test_resolve_recipe_no_blueprints(self):
+        """Verify resolve recipe no blueprints."""
         from flyto_pro_core.factory.recipe import resolve_recipe
 
         engine = MagicMock()
@@ -223,10 +295,12 @@ class TestResolveRecipe:
 
 
 class TestGenerateV2:
+    """Tests for GenerateV2 behavior."""
 
     @requires_blueprint
     @pytest.mark.asyncio
     async def test_generate_v2_with_real_engine(self):
+        """Verify generate v2 with real engine."""
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
         from flyto_pro_core.factory.pipeline import generate_v2
@@ -234,16 +308,16 @@ class TestGenerateV2:
         engine = BlueprintEngine(storage=MemoryBackend())
 
         result = await generate_v2(
-            description="Generate a QR code",
-            blueprint_engine=engine,
+            description="HTTP GET request", blueprint_engine=engine
         )
         assert result.ok is True
         assert len(result.steps) >= 1
-        assert any(s["module"] == "image.qrcode_generate" for s in result.steps)
+        assert result.steps[0]["module"] == "http.get"
 
     @requires_blueprint
     @pytest.mark.asyncio
-    async def test_generate_v2_split_and_qr(self):
+    async def test_generate_v2_fetch_and_save(self):
+        """Verify generate v2 fetch and save."""
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
         from flyto_pro_core.factory.pipeline import generate_v2
@@ -251,17 +325,17 @@ class TestGenerateV2:
         engine = BlueprintEngine(storage=MemoryBackend())
 
         result = await generate_v2(
-            description="Split text and generate QR for each line",
+            description="Fetch an API and save it to a file",
             blueprint_engine=engine,
         )
         assert result.ok is True
         modules = [s["module"] for s in result.steps]
-        assert "string.split" in modules
-        assert "image.qrcode_generate" in modules
+        assert modules == ["http.get", "file.write"]
 
     @requires_blueprint
     @pytest.mark.asyncio
     async def test_generate_v2_no_match(self):
+        """Verify generate v2 no match."""
         from flyto_blueprint import BlueprintEngine
         from flyto_blueprint.storage.memory import MemoryBackend
         from flyto_pro_core.factory.pipeline import generate_v2

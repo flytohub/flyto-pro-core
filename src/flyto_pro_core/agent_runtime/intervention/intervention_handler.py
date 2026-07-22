@@ -22,10 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 # Callback type for handling interventions
-InterventionCallback = Callable[
-    [InterventionRequest],
-    Awaitable[InterventionResponse]
-]
+InterventionCallback = Callable[[InterventionRequest], Awaitable[InterventionResponse]]
 
 
 @dataclass
@@ -57,6 +54,7 @@ class InterventionHandler:
     """
 
     def __init__(self, config: Optional[InterventionConfig] = None):
+        """Initialize the InterventionHandler."""
         self.config = config or InterventionConfig()
         self._callback: Optional[InterventionCallback] = None
         self._pending_requests: Dict[str, InterventionRequest] = {}
@@ -206,18 +204,20 @@ class InterventionHandler:
         response: InterventionResponse,
     ) -> None:
         """Record intervention in history."""
-        self._history.append({
-            "request_id": request.request_id,
-            "point_type": request.intervention_point.point_type.value,
-            "priority": request.intervention_point.priority.value,
-            "title": request.intervention_point.title,
-            "selected_option": response.selected_option_id,
-            "text_input": response.text_input,
-            "is_auto": response.is_auto_response,
-            "auto_reason": response.auto_response_reason,
-            "response_time_ms": response.response_time_ms,
-            "timestamp": response.response_at,
-        })
+        self._history.append(
+            {
+                "request_id": request.request_id,
+                "point_type": request.intervention_point.point_type.value,
+                "priority": request.intervention_point.priority.value,
+                "title": request.intervention_point.title,
+                "selected_option": response.selected_option_id,
+                "text_input": response.text_input,
+                "is_auto": response.is_auto_response,
+                "auto_reason": response.auto_response_reason,
+                "response_time_ms": response.response_time_ms,
+                "timestamp": response.response_at,
+            }
+        )
 
     def _cleanup_expired(self) -> None:
         """Remove expired requests from pending queue."""
@@ -247,11 +247,13 @@ class InterventionHandler:
 
         # Separate by priority
         critical = [
-            r for r in requests
+            r
+            for r in requests
             if r.intervention_point.priority == InterventionPriority.CRITICAL
         ]
         others = [
-            r for r in requests
+            r
+            for r in requests
             if r.intervention_point.priority != InterventionPriority.CRITICAL
         ]
 
@@ -314,6 +316,7 @@ class ConsoleInterventionHandler:
     """
 
     def __init__(self):
+        """Initialize the ConsoleInterventionHandler."""
         self.handler = InterventionHandler()
         self.handler.set_callback(self._console_callback)
 

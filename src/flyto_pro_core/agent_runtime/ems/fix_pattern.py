@@ -73,10 +73,12 @@ class SideEffect:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize SideEffect fields after initialization."""
         if not self.effect_id:
             self.effect_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "effect_id": self.effect_id,
             "effect_type": self.effect_type.value,
@@ -89,6 +91,7 @@ class SideEffect:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SideEffect":
+        """Create an instance from a dictionary."""
         return cls(
             effect_id=data.get("effect_id", ""),
             effect_type=SideEffectType(data.get("effect_type", "file_modify")),
@@ -111,10 +114,12 @@ class FixAction:
     order: int = 0
 
     def __post_init__(self):
+        """Normalize FixAction fields after initialization."""
         if not self.action_id:
             self.action_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "action_id": self.action_id,
             "action_type": self.action_type,
@@ -125,6 +130,7 @@ class FixAction:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FixAction":
+        """Create an instance from a dictionary."""
         return cls(
             action_id=data.get("action_id", ""),
             action_type=data.get("action_type", ""),
@@ -186,6 +192,7 @@ class FixPattern:
     related_patterns: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        """Normalize FixPattern fields after initialization."""
         if not self.pattern_id:
             self.pattern_id = str(uuid.uuid4())[:12]
 
@@ -242,11 +249,11 @@ class FixPattern:
     def get_dangerous_effects(self) -> List[SideEffect]:
         """Get dangerous or irreversible side effects."""
         return [
-            e for e in self.side_effects
-            if e.severity == "high" or not e.reversible
+            e for e in self.side_effects if e.severity == "high" or not e.reversible
         ]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "pattern_id": self.pattern_id,
             "name": self.name,
@@ -277,13 +284,12 @@ class FixPattern:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FixPattern":
+        """Create an instance from a dictionary."""
         return cls(
             pattern_id=data.get("pattern_id", ""),
             name=data.get("name", ""),
             description=data.get("description", ""),
-            error_signature=ErrorSignature.from_dict(
-                data.get("error_signature", {})
-            ),
+            error_signature=ErrorSignature.from_dict(data.get("error_signature", {})),
             additional_conditions=data.get("additional_conditions", []),
             actions=[FixAction.from_dict(a) for a in data.get("actions", [])],
             side_effects=[
@@ -314,6 +320,7 @@ class FixPatternBuilder:
     """Fluent builder for FixPattern."""
 
     def __init__(self):
+        """Initialize the FixPatternBuilder."""
         self._pattern = FixPattern()
 
     def name(self, name: str) -> "FixPatternBuilder":

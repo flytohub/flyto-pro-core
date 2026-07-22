@@ -53,10 +53,12 @@ class ProgressUpdate:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize ProgressUpdate fields after initialization."""
         if not self.update_id:
             self.update_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "update_id": self.update_id,
             "level": self.level.value,
@@ -89,6 +91,7 @@ class ProgressTracker:
     """
 
     def __init__(self):
+        """Initialize the ProgressTracker."""
         self._callbacks: List[ProgressCallback] = []
         self._current_goal_id: str = ""
         self._current_task_id: str = ""
@@ -167,7 +170,8 @@ class ProgressTracker:
             goal_id=goal_id,
             status="in_progress",
             progress_percent=percent,
-            message=message or f"Progress: {completed_tasks}/{progress['total_tasks']} tasks",
+            message=message
+            or f"Progress: {completed_tasks}/{progress['total_tasks']} tasks",
             items_completed=completed_tasks,
             items_total=progress["total_tasks"],
             started_at=progress["started_at"],
@@ -192,7 +196,11 @@ class ProgressTracker:
             level=ProgressLevel.GOAL,
             goal_id=goal_id,
             status="completed" if success else "failed",
-            progress_percent=100.0 if success else progress.get("completed_tasks", 0) / max(progress.get("total_tasks", 1), 1) * 100,
+            progress_percent=100.0
+            if success
+            else progress.get("completed_tasks", 0)
+            / max(progress.get("total_tasks", 1), 1)
+            * 100,
             message=message or ("Goal completed" if success else "Goal failed"),
             items_completed=progress.get("completed_tasks", 0),
             items_total=progress.get("total_tasks", 0),
@@ -302,7 +310,9 @@ class ProgressTracker:
         if progress.get("goal_id") in self._goal_progress:
             goal_progress = self._goal_progress[progress["goal_id"]]
             if success:
-                goal_progress["completed_tasks"] = goal_progress.get("completed_tasks", 0) + 1
+                goal_progress["completed_tasks"] = (
+                    goal_progress.get("completed_tasks", 0) + 1
+                )
                 self.update_goal(progress["goal_id"], goal_progress["completed_tasks"])
 
         return update
@@ -383,7 +393,9 @@ class ProgressTracker:
         # Update parent task
         if success and task_id in self._task_progress:
             task_progress = self._task_progress[task_id]
-            task_progress["completed_steps"] = task_progress.get("completed_steps", 0) + 1
+            task_progress["completed_steps"] = (
+                task_progress.get("completed_steps", 0) + 1
+            )
             self.update_task(task_id, task_progress["completed_steps"])
 
         return update

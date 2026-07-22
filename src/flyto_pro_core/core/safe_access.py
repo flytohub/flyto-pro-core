@@ -14,6 +14,7 @@ class SafeAccessError(Exception):
     """Raised when safe access fails and no default is provided."""
 
     def __init__(self, message: str, path: str = None):
+        """Initialize the SafeAccessError."""
         self.message = message
         self.path = path
         super().__init__(message)
@@ -241,7 +242,9 @@ def safe_chain(
                 index = int(accessor[1:-1])
             except ValueError:
                 if error_msg:
-                    raise SafeAccessError(f"Invalid index: {accessor}", path=" -> ".join(path_parts))
+                    raise SafeAccessError(
+                        f"Invalid index: {accessor}", path=" -> ".join(path_parts)
+                    )
                 return default
 
             if isinstance(current, (list, tuple)):
@@ -253,7 +256,10 @@ def safe_chain(
                     return default
             else:
                 if error_msg:
-                    raise SafeAccessError(f"Cannot index {type(current).__name__}", path=" -> ".join(path_parts))
+                    raise SafeAccessError(
+                        f"Cannot index {type(current).__name__}",
+                        path=" -> ".join(path_parts),
+                    )
                 return default
 
         # Dict or attribute access
@@ -272,6 +278,7 @@ def safe_chain(
 
 
 # Type-safe helpers for common patterns
+
 
 def safe_response_content(response: Any, default: str = "") -> str:
     """

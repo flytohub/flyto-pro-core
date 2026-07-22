@@ -129,6 +129,7 @@ class CapabilityToken:
     usage_cost: float = 0.0
 
     def __post_init__(self):
+        """Normalize CapabilityToken fields after initialization."""
         if not self.expires_at:
             # Default 1 hour expiry
             expiry = datetime.utcnow() + timedelta(hours=1)
@@ -207,6 +208,7 @@ class CapabilityGuard:
     """
 
     def __init__(self, token: CapabilityToken):
+        """Initialize the CapabilityGuard."""
         self.token = token
         self._call_count = 0
         self._last_minute = datetime.utcnow().replace(second=0, microsecond=0)

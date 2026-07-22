@@ -1,13 +1,1 @@
-# branding-guard allowlist (FLYA-42 / parent FLYA-10/FLYA-38)
-# Each line is a fixed-string path the guard ignores. Two kinds:
-#   [data]     legitimate domain-as-data (recon fixtures, domain-canon
-#              logic, scanner examples) — NOT branding, keep permanently.
-#   [branding] not-yet-canonicalized legacy-domain (flyto<dot>io) brand
-#              refs — remove once
-#              FLYA-38 migrates them to flyto2.com so the guard goes active.
-# Best-effort classification; verify before deleting an entry.
-
-## [data] domain-as-data — keep
-test_closed_loop.py
-
-## [branding] pending FLYA-38 canonicalization — remove when migrated
+# No non-canonical Flyto2 branding is allowlisted in this repository.

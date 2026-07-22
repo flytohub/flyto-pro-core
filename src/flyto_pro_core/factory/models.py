@@ -18,6 +18,7 @@ class RecipeResult:
     error: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "ok": self.ok,
             "blueprints": self.blueprints,
@@ -37,6 +38,7 @@ class PipelineResult:
     error: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "ok": self.ok,
             "steps": self.steps,

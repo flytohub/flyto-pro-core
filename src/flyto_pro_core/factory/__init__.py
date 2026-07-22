@@ -8,7 +8,7 @@ Everything else — wiring, layout, edges — is deterministic.
 Usage:
     from flyto_pro_core.factory import generate_v2, resolve_recipe, autofix_workflow
 
-    result = await generate_v2(description="批量生成 QR code")
+    result = await generate_v2(description="Fetch an API and save it to a file")
 """
 
 from .models import RecipeResult, PipelineResult

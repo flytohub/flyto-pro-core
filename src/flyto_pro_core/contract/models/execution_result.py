@@ -131,6 +131,7 @@ class ScopeData:
         return result
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "variables": self.variables,
             "node_id": self.node_id,
@@ -216,6 +217,7 @@ class ExecutionResult:
         return self.event == ExecutionEvent.DONE.value
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         result = {
             "ok": self.ok,
             "data": self.data,
@@ -238,6 +240,7 @@ class ExecutionResult:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ExecutionResult:
+        """Create an instance from a dictionary."""
         return cls(
             ok=data.get("ok", True),
             data=data.get("data"),
@@ -256,7 +259,9 @@ class ExecutionResult:
         return cls(ok=True, data=data, **kwargs)
 
     @classmethod
-    def failure(cls, error: str, error_code: Optional[str] = None, **kwargs) -> ExecutionResult:
+    def failure(
+        cls, error: str, error_code: Optional[str] = None, **kwargs
+    ) -> ExecutionResult:
         """Create a failure result."""
         return cls(ok=False, error=error, error_code=error_code, **kwargs)
 
@@ -282,7 +287,9 @@ class ExecutionResult:
         return cls(
             ok=True,
             data=data,
-            event=ExecutionEvent.TRUE.value if condition else ExecutionEvent.FALSE.value,
+            event=ExecutionEvent.TRUE.value
+            if condition
+            else ExecutionEvent.FALSE.value,
             **kwargs,
         )
 
@@ -343,15 +350,17 @@ class ExecutionTrace:
         duration_ms: Optional[float] = None,
     ) -> None:
         """Add a node execution trace."""
-        self.node_traces.append({
-            "node_id": node_id,
-            "module_id": module_id,
-            "started_at": started_at,
-            "completed_at": completed_at,
-            "status": status,
-            "result": result.to_dict() if result else None,
-            "duration_ms": duration_ms,
-        })
+        self.node_traces.append(
+            {
+                "node_id": node_id,
+                "module_id": module_id,
+                "started_at": started_at,
+                "completed_at": completed_at,
+                "status": status,
+                "result": result.to_dict() if result else None,
+                "duration_ms": duration_ms,
+            }
+        )
 
     def complete(self, status: str = "completed", error: Optional[str] = None) -> None:
         """Mark execution as complete."""
@@ -369,6 +378,7 @@ class ExecutionTrace:
                 pass
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "execution_id": self.execution_id,
             "workflow_id": self.workflow_id,

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://docs.flyto2.com/schemas/documentation-contract-v1.json",
+  "schema_version": 1,
+  "repository": "flyto-pro-core",
+  "status": "active",
+  "audiences": ["Python integrators", "provider authors", "Flyto2 maintainers", "open-source contributors"],
+  "documentation": {
+    "index": "docs/README.md",
+    "architecture": "ARCHITECTURE.md",
+    "state": "STATE.md",
+    "security": "SECURITY.md",
+    "changelog": "CHANGELOG.md",
+    "feature_reference": "docs/FEATURES.md",
+    "whitepaper": "docs/WHITEPAPER.md",
+    "configuration": "docs/CONFIGURATION.md",
+    "release": "docs/RELEASE.md",
+    "api_reference": "docs/reference/python-api.md",
+    "environment_reference": "docs/reference/environment.md"
+  },
+  "source_areas": [
+    {
+      "id": "contracts",
+      "description": "Workflow and module contracts, registry lookup, validation, binding resolution, and executable-plan compilation.",
+      "paths": ["src/flyto_pro_core/contract/**"],
+      "documentation": ["docs/CONTRACT_ENGINE.md", "docs/FEATURES.md#contract-engine", "docs/reference/python-api.md"]
+    },
+    {
+      "id": "agent-runtime",
+      "description": "Deterministic agent contracts, observation, evidence, verification, project state, interventions, EMS, and UI data.",
+      "paths": ["src/flyto_pro_core/agent_runtime/**"],
+      "documentation": ["docs/AGENT_RUNTIME.md", "docs/FEATURES.md#deterministic-agent-runtime", "docs/reference/python-api.md"]
+    },
+    {
+      "id": "providers-and-cost",
+      "description": "Cost enforcement, abstract provider interfaces, optional external adapters, storage, and quality contracts.",
+      "paths": ["src/flyto_pro_core/cost/**", "src/flyto_pro_core/interfaces/**"],
+      "documentation": ["docs/COST_CONTROL.md", "docs/PROVIDERS.md", "docs/FEATURES.md#cost-and-budget-control", "docs/FEATURES.md#provider-and-storage-interfaces", "docs/CONFIGURATION.md"]
+    },
+    {
+      "id": "factory-core-config",
+      "description": "Recipe-based workflow generation, dependency injection, validation helpers, safe access, and typed configuration.",
+      "paths": ["src/flyto_pro_core/factory/**", "src/flyto_pro_core/core/**", "src/flyto_pro_core/config/**"],
+      "documentation": ["docs/FACTORY.md", "docs/FEATURES.md#factory-pipeline", "docs/FEATURES.md#core-utilities", "docs/CONFIGURATION.md"]
+    }
+  ],
+  "feature_surfaces": [
+    {
+      "id": "contract-engine",
+      "title": "Contract engine",
+      "kind": "library",
+      "status": "active",
+      "description": "Models, validates, resolves, catalogs, and compiles Flyto2 workflow contracts without executing the resulting plan.",
+      "source": ["src/flyto_pro_core/contract/**"],
+      "documentation": ["docs/CONTRACT_ENGINE.md", "docs/FEATURES.md#contract-engine", "docs/reference/python-api.md"],
+      "verification": ["python -m ruff check src/ tests/ scripts/", "python scripts/generate-api-reference.py --check"]
+    },
+    {
+      "id": "cost-control",
+      "title": "Cost and budget control",
+      "kind": "library",
+      "status": "active",
+      "description": "Tracks estimated model cost, tokens, calls, and iterations and enforces caller-selected budget limits.",
+      "source": ["src/flyto_pro_core/cost/**"],
+      "documentation": ["docs/COST_CONTROL.md", "docs/FEATURES.md#cost-and-budget-control", "docs/reference/python-api.md"],
+      "verification": ["python -m ruff check src/ tests/ scripts/", "python scripts/generate-api-reference.py --check"]
+    },
+    {
+      "id": "provider-interfaces",
+      "title": "Provider and storage interfaces",
+      "kind": "api",
+      "status": "active",
+      "description": "Defines swappable LLM, embedding, file, vector, quality, and code-analysis ports with optional adapters.",
+      "source": ["src/flyto_pro_core/interfaces/**"],
+      "documentation": ["docs/PROVIDERS.md", "docs/FEATURES.md#provider-and-storage-interfaces", "docs/CONFIGURATION.md", "docs/reference/python-api.md"],
+      "verification": ["python -m ruff check src/ tests/ scripts/", "python -m build"]
+    },
+    {
+      "id": "agent-runtime",
+      "title": "Deterministic agent runtime",
+      "kind": "library",
+      "status": "active",
+      "description": "Provides versioned plans, capability guards, observations, evidence, deterministic verification, state, interventions, EMS, and UI contracts.",
+      "source": ["src/flyto_pro_core/agent_runtime/**"],
+      "documentation": ["docs/AGENT_RUNTIME.md", "docs/FEATURES.md#deterministic-agent-runtime", "docs/reference/python-api.md"],
+      "verification": ["python -m ruff check src/ tests/ scripts/", "python scripts/generate-api-reference.py --check"]
+    },
+    {
+      "id": "factory",
+      "title": "Factory pipeline",
+      "kind": "workflow",
+      "status": "experimental",
+      "description": "Selects blueprints and deterministically composes, enriches, repairs, and validates generated workflows.",
+      "source": ["src/flyto_pro_core/factory/**"],
+      "documentation": ["docs/FACTORY.md", "docs/FEATURES.md#factory-pipeline", "docs/reference/python-api.md"],
+      "tests": ["tests/test_factory.py", "tests/test_factory_integration.py", "tests/test_factory_output.py"],
+      "verification": ["python -m pytest"]
+    },
+    {
+      "id": "core-and-config",
+      "title": "Core utilities and configuration",
+      "kind": "configuration",
+      "status": "active",
+      "description": "Supplies dependency injection, safe-access and validation helpers, typed environment settings, constants, and timeouts.",
+      "source": ["src/flyto_pro_core/core/**", "src/flyto_pro_core/config/**"],
+      "documentation": ["docs/FEATURES.md#core-utilities", "docs/CONFIGURATION.md", "docs/reference/python-api.md"],
+      "verification": ["python -m ruff check src/ tests/ scripts/", "python -m build"]
+    }
+  ]
+}

@@ -6,7 +6,7 @@ and YAML configuration files. Implements the singleton pattern for efficiency.
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, is_dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -28,6 +28,55 @@ from .constants import (
 )
 
 
+_ENV_FIELDS = {
+    "database": {
+        "host": "POSTGRES_HOST",
+        "port": "POSTGRES_PORT",
+        "database": "POSTGRES_DB",
+        "user": "POSTGRES_USER",
+        "password": "POSTGRES_PASSWORD",
+        "ssl_mode": "POSTGRES_SSL_MODE",
+    },
+    "redis": {
+        "host": "REDIS_HOST",
+        "port": "REDIS_PORT",
+        "password": "REDIS_PASSWORD",
+        "db": "REDIS_DB",
+    },
+    "vector_db": {
+        "url": "QDRANT_URL",
+        "api_key": "QDRANT_API_KEY",
+        "collection_name": "QDRANT_COLLECTION",
+        "local_path": "QDRANT_PATH",
+    },
+    "ollama": {
+        "url": "OLLAMA_URL",
+        "model": "OLLAMA_MODEL",
+        "embedding_model": "OLLAMA_EMBEDDING_MODEL",
+    },
+    "openai": {"api_key": "OPENAI_API_KEY", "model": "OPENAI_MODEL"},
+    "anthropic": {
+        "api_key": "ANTHROPIC_API_KEY",
+        "model": "ANTHROPIC_MODEL",
+    },
+    "telegram": {
+        "bot_token": "TELEGRAM_BOT_TOKEN",
+        "allowed_users": "TELEGRAM_ALLOWED_USERS",
+    },
+    "api": {
+        "host": "API_HOST",
+        "port": "API_PORT",
+        "debug": "API_DEBUG",
+        "workers": "API_WORKERS",
+    },
+    "license": {
+        "server_url": "LICENSE_SERVER_URL",
+        "cache_dir": "LICENSE_CACHE_DIR",
+    },
+}
+_ROOT_ENV_FIELDS = {"environment": "FLYTO_ENV", "debug": "DEBUG"}
+
+
 def _get_env(key: str, default: Any = None, cast_type: type = str) -> Any:
     """Get environment variable with type casting."""
     value = os.getenv(key, default)
@@ -41,6 +90,22 @@ def _get_env(key: str, default: Any = None, cast_type: type = str) -> Any:
         return default
 
 
+def _coerce_yaml_value(value: Any, current: Any) -> Any:
+    """Coerce a YAML scalar to the type of an existing setting value."""
+    if isinstance(current, bool):
+        if isinstance(value, bool):
+            return value
+        return str(value).lower() in ("true", "1", "yes", "on")
+    if current is None:
+        return value
+    try:
+        return type(current)(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"invalid value {value!r} for {type(current).__name__}"
+        ) from exc
+
+
 @dataclass
 class DatabaseSettings:
     """PostgreSQL database configuration."""
@@ -49,9 +114,7 @@ class DatabaseSettings:
     port: int = field(
         default_factory=lambda: _get_env("POSTGRES_PORT", DEFAULT_POSTGRES_PORT, int)
     )
-    database: str = field(
-        default_factory=lambda: _get_env("POSTGRES_DB", "flyto_jobs")
-    )
+    database: str = field(default_factory=lambda: _get_env("POSTGRES_DB", "flyto_jobs"))
     user: str = field(default_factory=lambda: _get_env("POSTGRES_USER", "postgres"))
     password: str = field(default_factory=lambda: _get_env("POSTGRES_PASSWORD", ""))
     ssl_mode: str = field(
@@ -111,9 +174,7 @@ class VectorDBSettings:
 class OllamaSettings:
     """Ollama LLM configuration."""
 
-    url: str = field(
-        default_factory=lambda: _get_env("OLLAMA_URL", DEFAULT_OLLAMA_URL)
-    )
+    url: str = field(default_factory=lambda: _get_env("OLLAMA_URL", DEFAULT_OLLAMA_URL))
     model: str = field(
         default_factory=lambda: _get_env("OLLAMA_MODEL", "llama3.2:latest")
     )
@@ -129,9 +190,7 @@ class OpenAISettings:
     """OpenAI API configuration."""
 
     api_key: str = field(default_factory=lambda: _get_env("OPENAI_API_KEY", ""))
-    model: str = field(
-        default_factory=lambda: _get_env("OPENAI_MODEL", "gpt-4o-mini")
-    )
+    model: str = field(default_factory=lambda: _get_env("OPENAI_MODEL", "gpt-4o-mini"))
     timeout: int = field(default_factory=lambda: TIMEOUT_CONFIG["llm_inference"])
     max_tokens: int = field(
         default_factory=lambda: AGENT_CONFIG["max_tokens_per_request"]
@@ -156,9 +215,7 @@ class AnthropicSettings:
 class TelegramSettings:
     """Telegram bot configuration."""
 
-    bot_token: str = field(
-        default_factory=lambda: _get_env("TELEGRAM_BOT_TOKEN", "")
-    )
+    bot_token: str = field(default_factory=lambda: _get_env("TELEGRAM_BOT_TOKEN", ""))
     allowed_users: str = field(
         default_factory=lambda: _get_env("TELEGRAM_ALLOWED_USERS", "")
     )
@@ -168,7 +225,9 @@ class TelegramSettings:
         """Parse allowed users into list of integers."""
         if not self.allowed_users:
             return []
-        return [int(uid.strip()) for uid in self.allowed_users.split(",") if uid.strip()]
+        return [
+            int(uid.strip()) for uid in self.allowed_users.split(",") if uid.strip()
+        ]
 
 
 @dataclass
@@ -208,15 +267,11 @@ class QualitySettings:
 class AgentSettings:
     """Agent behavior configuration."""
 
-    max_iterations: int = field(
-        default_factory=lambda: AGENT_CONFIG["max_iterations"]
-    )
+    max_iterations: int = field(default_factory=lambda: AGENT_CONFIG["max_iterations"])
     max_refine_attempts: int = field(
         default_factory=lambda: AGENT_CONFIG["max_refine_attempts"]
     )
-    context_window: int = field(
-        default_factory=lambda: AGENT_CONFIG["context_window"]
-    )
+    context_window: int = field(default_factory=lambda: AGENT_CONFIG["context_window"])
 
 
 @dataclass
@@ -232,9 +287,7 @@ class LicenseSettings:
     cache_dir: str = field(
         default_factory=lambda: _get_env("LICENSE_CACHE_DIR", ".flyto2/license")
     )
-    grace_days: int = field(
-        default_factory=lambda: CACHE_CONFIG["grace_period_days"]
-    )
+    grace_days: int = field(default_factory=lambda: CACHE_CONFIG["grace_period_days"])
     cache_ttl_hours: int = field(
         default_factory=lambda: CACHE_CONFIG["license_cache_ttl_hours"]
     )
@@ -275,13 +328,45 @@ class Settings:
 
     @classmethod
     def from_yaml(cls, config_path: Path) -> "Settings":
-        """Load settings from a YAML file, with env vars taking precedence."""
+        """Load known settings from YAML, with environment values taking precedence."""
         settings = cls()
-        if config_path.exists():
-            with open(config_path) as f:
-                _yaml_config = yaml.safe_load(f) or {}
-            # YAML values are used as fallbacks; env vars take precedence
-            # Implementation can be extended as needed
+        if not config_path.exists():
+            return settings
+
+        yaml_config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        if not isinstance(yaml_config, dict):
+            raise ValueError("settings YAML must contain a mapping at the root")
+
+        allowed_root = {item.name for item in fields(settings)}
+        for section_name, section_value in yaml_config.items():
+            if section_name not in allowed_root:
+                raise ValueError(f"unknown settings section: {section_name}")
+
+            current_section = getattr(settings, section_name)
+            if is_dataclass(current_section):
+                if not isinstance(section_value, dict):
+                    raise ValueError(
+                        f"settings section {section_name} must be a mapping"
+                    )
+                allowed_fields = {item.name for item in fields(current_section)}
+                for key, value in section_value.items():
+                    if key not in allowed_fields:
+                        raise ValueError(f"unknown setting: {section_name}.{key}")
+                    env_key = _ENV_FIELDS.get(section_name, {}).get(key)
+                    if env_key and env_key in os.environ:
+                        continue
+                    current = getattr(current_section, key)
+                    setattr(current_section, key, _coerce_yaml_value(value, current))
+                continue
+
+            env_key = _ROOT_ENV_FIELDS.get(section_name)
+            if env_key and env_key in os.environ:
+                continue
+            setattr(
+                settings,
+                section_name,
+                _coerce_yaml_value(section_value, current_section),
+            )
         return settings
 
 

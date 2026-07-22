@@ -84,8 +84,10 @@ class RuntimeContext:
     verifications: List[VerificationReport] = field(default_factory=list)
 
     def __post_init__(self):
+        """Normalize RuntimeContext fields after initialization."""
         if not self.session_id:
             import uuid
+
             self.session_id = str(uuid.uuid4())[:12]
 
 
@@ -116,6 +118,7 @@ class AgentLoopAdapter:
         capability_token: Optional[CapabilityToken] = None,
         stop_policy: Optional[StopPolicy] = None,
     ):
+        """Initialize the AgentLoopAdapter."""
         self.context = RuntimeContext(project_path=project_path)
 
         # Initialize components
@@ -199,15 +202,15 @@ class AgentLoopAdapter:
         step = Step(
             module_id=module_id,
             params=params,
-            task_id=self.context.current_task.task_id if self.context.current_task else "",
+            task_id=self.context.current_task.task_id
+            if self.context.current_task
+            else "",
         )
         step.start()
         self.context.current_step = step
 
         # Record in collector
-        self.context.observation_collector.record_step_start(
-            step.step_id, module_id
-        )
+        self.context.observation_collector.record_step_start(step.step_id, module_id)
 
         # Update progress
         self.context.progress_tracker.step_started(
@@ -274,8 +277,7 @@ class AgentLoopAdapter:
             self.context.current_task.add_step(step)
 
         logger.debug(
-            f"Step completed: {step.step_id} "
-            f"({'success' if success else 'failed'})"
+            f"Step completed: {step.step_id} ({'success' if success else 'failed'})"
         )
         return step
 
@@ -355,7 +357,9 @@ class AgentLoopAdapter:
         sig = compute_error_signature(
             error_type=report.failure_analysis.failure_type,
             error_message=report.failure_analysis.root_cause,
-            module_id=self.context.current_step.module_id if self.context.current_step else "",
+            module_id=self.context.current_step.module_id
+            if self.context.current_step
+            else "",
         )
 
         result = self.context.ems_store.find_pattern(sig)
@@ -417,12 +421,10 @@ class AgentLoopAdapter:
             "passed": sum(1 for v in self.context.verifications if v.passed),
             "failed": sum(1 for v in self.context.verifications if not v.passed),
             "current_goal": (
-                self.context.current_goal.goal_id
-                if self.context.current_goal else None
+                self.context.current_goal.goal_id if self.context.current_goal else None
             ),
             "current_task": (
-                self.context.current_task.task_id
-                if self.context.current_task else None
+                self.context.current_task.task_id if self.context.current_task else None
             ),
         }
 

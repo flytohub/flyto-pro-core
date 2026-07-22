@@ -20,9 +20,12 @@ class TableSnapshot:
     row_count: int
     checksum: str = ""  # Data fingerprint
     sample_rows: List[Dict[str, Any]] = field(default_factory=list)
-    key_queries: Dict[str, Any] = field(default_factory=dict)  # Predefined query results
+    key_queries: Dict[str, Any] = field(
+        default_factory=dict
+    )  # Predefined query results
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "table_name": self.table_name,
             "row_count": self.row_count,
@@ -33,6 +36,7 @@ class TableSnapshot:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TableSnapshot":
+        """Create an instance from a dictionary."""
         return cls(
             table_name=data.get("table_name", ""),
             row_count=data.get("row_count", 0),
@@ -53,6 +57,7 @@ class FileInfo:
     content_preview: Optional[str] = None  # First 500 chars
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "path": self.path,
             "size": self.size,
@@ -63,6 +68,7 @@ class FileInfo:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FileInfo":
+        """Create an instance from a dictionary."""
         return cls(
             path=data.get("path", ""),
             size=data.get("size", 0),
@@ -83,6 +89,7 @@ class RequestInfo:
     timestamp: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "method": self.method,
             "url": self.url,
@@ -93,6 +100,7 @@ class RequestInfo:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RequestInfo":
+        """Create an instance from a dictionary."""
         return cls(
             method=data.get("method", ""),
             url=data.get("url", ""),
@@ -113,6 +121,7 @@ class ResponseInfo:
     duration_ms: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "status_code": self.status_code,
             "url": self.url,
@@ -123,6 +132,7 @@ class ResponseInfo:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ResponseInfo":
+        """Create an instance from a dictionary."""
         return cls(
             status_code=data.get("status_code", 0),
             url=data.get("url", ""),
@@ -144,6 +154,7 @@ class StepTrace:
     error: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "step_id": self.step_id,
             "module_id": self.module_id,
@@ -155,6 +166,7 @@ class StepTrace:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "StepTrace":
+        """Create an instance from a dictionary."""
         return cls(
             step_id=data.get("step_id", ""),
             module_id=data.get("module_id", ""),
@@ -176,6 +188,7 @@ class ModuleIO:
     duration_ms: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "module_id": self.module_id,
             "step_id": self.step_id,
@@ -186,6 +199,7 @@ class ModuleIO:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ModuleIO":
+        """Create an instance from a dictionary."""
         return cls(
             module_id=data.get("module_id", ""),
             step_id=data.get("step_id", ""),
@@ -211,6 +225,7 @@ class BrowserObservation:
     local_storage: Dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "url": self.url,
             "title": self.title,
@@ -226,6 +241,7 @@ class BrowserObservation:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "BrowserObservation":
+        """Create an instance from a dictionary."""
         return cls(
             url=data.get("url", ""),
             title=data.get("title", ""),
@@ -252,6 +268,7 @@ class DatabaseObservation:
     tables_snapshot: Dict[str, TableSnapshot] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "connection_status": self.connection_status,
             "tables_snapshot": {
@@ -261,6 +278,7 @@ class DatabaseObservation:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DatabaseObservation":
+        """Create an instance from a dictionary."""
         return cls(
             connection_status=data.get("connection_status", "connected"),
             tables_snapshot={
@@ -279,6 +297,7 @@ class FileSystemObservation:
     files_deleted: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "files_created": [f.to_dict() for f in self.files_created],
             "files_modified": [f.to_dict() for f in self.files_modified],
@@ -287,6 +306,7 @@ class FileSystemObservation:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FileSystemObservation":
+        """Create an instance from a dictionary."""
         return cls(
             files_created=[
                 FileInfo.from_dict(f) for f in data.get("files_created", [])
@@ -307,6 +327,7 @@ class NetworkObservation:
     failed_requests: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "requests_made": [r.to_dict() for r in self.requests_made],
             "responses_received": [r.to_dict() for r in self.responses_received],
@@ -315,6 +336,7 @@ class NetworkObservation:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "NetworkObservation":
+        """Create an instance from a dictionary."""
         return cls(
             requests_made=[
                 RequestInfo.from_dict(r) for r in data.get("requests_made", [])
@@ -336,6 +358,7 @@ class RuntimeObservation:
     execution_time_ms: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "step_traces": [s.to_dict() for s in self.step_traces],
             "module_ios": [m.to_dict() for m in self.module_ios],
@@ -345,10 +368,9 @@ class RuntimeObservation:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RuntimeObservation":
+        """Create an instance from a dictionary."""
         return cls(
-            step_traces=[
-                StepTrace.from_dict(s) for s in data.get("step_traces", [])
-            ],
+            step_traces=[StepTrace.from_dict(s) for s in data.get("step_traces", [])],
             module_ios=[ModuleIO.from_dict(m) for m in data.get("module_ios", [])],
             error_stacks=data.get("error_stacks", []),
             execution_time_ms=data.get("execution_time_ms", 0),

@@ -1,34 +1,33 @@
-name: Write text content to a file
+name: Send a Slack message
 version: 1.0.0
 steps:
-- id: node_1773899485633
+- id: node_269293219878152
   module: flow.start
-  label: node_1773899485633
+  label: Start
   params: {}
   positionX: 100
   positionY: 150
   orderIndex: 0
-- id: node_1773899485634_0_5zjyke
-  module: file.write
-  label: node_1773899485634_0_5zjyke
+- id: node_269293219878153_0_0647fb
+  module: notification.slack.send_message
+  label: Send Slack message
   params:
-    path: '{{path}}'
-    content: '{{content}}'
-    encoding: utf-8
-    mode: overwrite
+    webhook_url: '{{webhook_url}}'
+    text: '{{text}}'
   positionX: 400
   positionY: 150
   orderIndex: 1
 edges:
-- id: e_node_1773899485633_node_1773899485634_0_5zjyke
-  source: node_1773899485633
-  target: node_1773899485634_0_5zjyke
+- id: e_node_269293219878152_node_269293219878153_0_0647fb
+  source: node_269293219878152
+  target: node_269293219878153_0_0647fb
   sourceHandle: output
   targetHandle: target
   type: glow
   data:
     edgeType: sequential
     pathType: bezier
+description: Send a Slack message
 _ui:
   builder:
     sections:
@@ -39,11 +38,10 @@ _ui:
       - 12
       columnsData:
       - components:
-        - label: Content
-          id: content
+        - label: Text
+          id: text
           type: textarea
           props:
-            placeholder: Enter file content...
             required: true
             rows: 6
     - id: section_2
@@ -54,9 +52,8 @@ _ui:
       - 6
       columnsData:
       - components:
-        - label: File Path
-          id: path
+        - label: Webhook Url
+          id: webhook_url
           type: text
-          props:
-            placeholder: /path/to/file.txt
+          props: {}
       - components: []

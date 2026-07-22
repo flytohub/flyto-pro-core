@@ -165,7 +165,7 @@ TRAINING_CONFIG = {
 LLM_MODELS = {
     "openai_default": "gpt-4o-mini",
     "openai_fast": "gpt-4o-mini",  # For quick tasks
-    "openai_smart": "gpt-4o",      # For complex tasks
+    "openai_smart": "gpt-4o",  # For complex tasks
     "openai_embedding": "text-embedding-3-small",
     "anthropic_default": "claude-3-5-sonnet-latest",
 }
@@ -204,6 +204,7 @@ def get_llm_model(model_type: str = "openai_default") -> str:
             return env_value
 
     return LLM_MODELS.get(model_type, LLM_MODELS["openai_default"])
+
 
 # ============================================
 # Embedding Configuration
@@ -279,13 +280,13 @@ SCHEDULER_CONFIG = {
 # Scoring Router Configuration
 # ============================================
 SCORING_ROUTER_CONFIG = {
-    "evidence_threshold": 30,       # Below this → COLLECT tier
+    "evidence_threshold": 30,  # Below this → COLLECT tier
     "evidence_strong_threshold": 55,  # Strong evidence threshold
     "difficulty_low_threshold": 40,  # Below this + low risk → QUICK_PATCH
     "difficulty_high_threshold": 70,  # Above this → SPEC_FIRST
-    "risk_high_threshold": 70,       # Above this → SPEC_FIRST
-    "risk_low_threshold": 40,        # Below this + low difficulty → QUICK_PATCH
-    "intent_confidence_min": 50,     # Min intent score to be considered
-    "pressure_to_multistep": 50,     # Pressure above this → MULTI_STEP
-    "pressure_to_spec_first": 75,    # Pressure above this → SPEC_FIRST
+    "risk_high_threshold": 70,  # Above this → SPEC_FIRST
+    "risk_low_threshold": 40,  # Below this + low difficulty → QUICK_PATCH
+    "intent_confidence_min": 50,  # Min intent score to be considered
+    "pressure_to_multistep": 50,  # Pressure above this → MULTI_STEP
+    "pressure_to_spec_first": 75,  # Pressure above this → SPEC_FIRST
 }

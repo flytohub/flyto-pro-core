@@ -68,6 +68,50 @@ class ParamType(str, Enum):
     SECRET = "secret"
     EXPRESSION = "expression"  # Dynamic value from context
     SELECTOR = "selector"  # CSS/XPath selector with picker UI
+    ANY = "any"
+    NULL = "null"
+
+
+_PARAM_TYPE_ALIASES = {
+    "text": ParamType.STRING,
+    "textarea": ParamType.STRING,
+    "email": ParamType.STRING,
+    "url": ParamType.STRING,
+    "password": ParamType.SECRET,
+    "json": ParamType.OBJECT,
+    "dict": ParamType.OBJECT,
+    "list": ParamType.ARRAY,
+    "integer": ParamType.NUMBER,
+    "float": ParamType.NUMBER,
+    "bool": ParamType.BOOLEAN,
+    "checkbox": ParamType.BOOLEAN,
+}
+
+
+def _normalize_param_type(value: Any) -> ParamType:
+    """Normalize Flyto2 Core aliases to the contract parameter vocabulary."""
+    if isinstance(value, ParamType):
+        return value
+    normalized = str(value or "string").lower()
+    if normalized in _PARAM_TYPE_ALIASES:
+        return _PARAM_TYPE_ALIASES[normalized]
+    try:
+        return ParamType(normalized)
+    except ValueError:
+        logger.warning("Unknown parameter type %r; preserving it as any", value)
+        return ParamType.ANY
+
+
+def _normalize_param_types(value: Any) -> tuple[ParamType, List[ParamType]]:
+    """Return the primary type and optional union members for raw metadata."""
+    if isinstance(value, (list, tuple, set)):
+        allowed = []
+        for item in value:
+            normalized = _normalize_param_type(item)
+            if normalized not in allowed:
+                allowed.append(normalized)
+        return (allowed[0] if allowed else ParamType.ANY), allowed
+    return _normalize_param_type(value), []
 
 
 @dataclass
@@ -81,6 +125,7 @@ class ParamOption:
     disabled: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         result = {"value": self.value, "label": self.label}
         if self.description:
             result["description"] = self.description
@@ -92,6 +137,7 @@ class ParamOption:
 
     @classmethod
     def from_dict(cls, data: Union[Dict[str, Any], str]) -> ParamOption:
+        """Create an instance from a dictionary."""
         if isinstance(data, str):
             return cls(value=data, label=data)
         return cls(
@@ -128,6 +174,7 @@ class ParamDef:
     """
 
     type: ParamType = ParamType.STRING
+    allowed_types: List[ParamType] = field(default_factory=list)
     required: bool = False
     default: Any = None
     label: Optional[str] = None
@@ -144,7 +191,9 @@ class ParamDef:
     group: Optional[str] = None
     order: int = 0
 
-    def validate(self, value: Any, all_params: Optional[Dict[str, Any]] = None) -> tuple[bool, Optional[str]]:
+    def validate(
+        self, value: Any, all_params: Optional[Dict[str, Any]] = None
+    ) -> tuple[bool, Optional[str]]:
         """
         Validate a parameter value.
 
@@ -175,11 +224,14 @@ class ParamDef:
             ParamType.SECRET: lambda v: isinstance(v, str),
             ParamType.EXPRESSION: lambda v: isinstance(v, str),
             ParamType.SELECTOR: lambda v: isinstance(v, str),
+            ParamType.ANY: lambda v: True,
+            ParamType.NULL: lambda v: v is None,
         }
 
-        validator = type_validators.get(self.type)
-        if validator and not validator(value):
-            return False, f"Invalid type, expected {self.type.value}"
+        expected_types = self.allowed_types or [self.type]
+        if not any(type_validators[param_type](value) for param_type in expected_types):
+            expected = ", ".join(param_type.value for param_type in expected_types)
+            return False, f"Invalid type, expected one of: {expected}"
 
         # Options validation for select types
         if self.type in (ParamType.SELECT, ParamType.MULTI_SELECT) and self.options:
@@ -237,7 +289,11 @@ class ParamDef:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         result = {
-            "type": self.type.value,
+            "type": (
+                [item.value for item in self.allowed_types]
+                if self.allowed_types
+                else self.type.value
+            ),
             "required": self.required,
         }
 
@@ -275,12 +331,14 @@ class ParamDef:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ParamDef:
         """Create from dictionary."""
+        param_type, allowed_types = _normalize_param_types(data.get("type", "string"))
         options = []
         if "options" in data:
             options = [ParamOption.from_dict(opt) for opt in data["options"]]
 
         return cls(
-            type=ParamType(data.get("type", "string")),
+            type=param_type,
+            allowed_types=allowed_types,
             required=data.get("required", False),
             default=data.get("default"),
             label=data.get("label"),
@@ -429,11 +487,15 @@ class ParamsSchema:
 
             description = param_data.get("description")
             if isinstance(description, dict):
-                description = description.get("en") or next(iter(description.values()), None)
+                description = description.get("en") or next(
+                    iter(description.values()), None
+                )
 
             placeholder = param_data.get("placeholder")
             if isinstance(placeholder, dict):
-                placeholder = placeholder.get("en") or next(iter(placeholder.values()), None)
+                placeholder = placeholder.get("en") or next(
+                    iter(placeholder.values()), None
+                )
 
             # Handle options
             options = []
@@ -442,28 +504,44 @@ class ParamsSchema:
                     if isinstance(opt, dict):
                         opt_label = opt.get("label")
                         if isinstance(opt_label, dict):
-                            opt_label = opt_label.get("en") or next(iter(opt_label.values()), "")
-                        options.append(ParamOption(
-                            value=opt.get("value", opt_label),
-                            label=opt_label or str(opt.get("value", "")),
-                        ))
+                            opt_label = opt_label.get("en") or next(
+                                iter(opt_label.values()), ""
+                            )
+                        options.append(
+                            ParamOption(
+                                value=opt.get("value", opt_label),
+                                label=opt_label or str(opt.get("value", "")),
+                            )
+                        )
                     else:
                         options.append(ParamOption(value=opt, label=str(opt)))
 
+            param_type, allowed_types = _normalize_param_types(
+                param_data.get("type", "string")
+            )
+            validation = dict(param_data.get("validation", {}))
+            validation.update(
+                {
+                    k: v
+                    for k, v in param_data.items()
+                    if k in ("min", "max", "pattern", "minLength", "maxLength")
+                }
+            )
+
             params[name] = ParamDef(
-                type=ParamType(param_data.get("type", "string")),
+                type=param_type,
+                allowed_types=allowed_types,
                 required=param_data.get("required", False),
                 default=param_data.get("default"),
                 label=label,
                 description=description,
                 placeholder=placeholder,
                 options=options,
-                validation={
-                    k: v for k, v in param_data.items()
-                    if k in ("min", "max", "pattern", "minLength", "maxLength")
-                },
-                secret=param_data.get("secret", False),
+                validation=validation,
+                secret=param_data.get("secret", param_data.get("sensitive", False)),
                 multiline=param_data.get("multiline", False),
+                group=param_data.get("group"),
+                order=param_data.get("order", 0),
             )
 
         return cls(params=params)

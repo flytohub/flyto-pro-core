@@ -16,20 +16,21 @@ boundary between Apache-2.0 runtime primitives and private enterprise modules.
 
 Official links: [flyto2.com](https://flyto2.com) ·
 [Docs](https://docs.flyto2.com) ·
-[flyto-core](https://github.com/flytohub/flyto-core) ·
-[flyto-indexer](https://github.com/flytohub/flyto-indexer) ·
+[Flyto2 Core](https://github.com/flytohub/flyto-core) ·
+[Flyto2 Indexer](https://github.com/flytohub/flyto-indexer) ·
 [Security](mailto:security@flyto2.com)
 
 ## What's Inside
 
-| Module | Purpose | Lines |
-|--------|---------|-------|
-| `contract` | Workflow validation, binding resolution, compilation | 4.9K |
-| `cost` | Multi-resource budget management (cost, tokens, tool calls, iterations) | 1.3K |
-| `interfaces` | Abstract LLM, vector store, quality checker + OpenAI/Qdrant providers | 1.8K |
-| `agent_runtime` | Deterministic verification, observations, project state management | 11.9K |
-| `core` | DI container, safe access utilities, validators | 1.5K |
-| `config` | Settings, constants, timeouts | 1K |
+| Module | Purpose | Reference |
+|--------|---------|-----------|
+| `contract` | Workflow models, validation, binding resolution, registry, and compilation | [Contract engine](docs/FEATURES.md#contract-engine) |
+| `cost` | Cost, token, tool-call, and iteration budgets | [Cost control](docs/FEATURES.md#cost-and-budget-control) |
+| `interfaces` | LLM, embedding, storage, vector, and quality ports plus optional providers | [Provider interfaces](docs/FEATURES.md#provider-and-storage-interfaces) |
+| `agent_runtime` | Contracts, evidence, observations, project state, intervention, EMS, and UI data | [Agent runtime](docs/FEATURES.md#deterministic-agent-runtime) |
+| `factory` | Recipe selection and deterministic workflow composition | [Factory pipeline](docs/FEATURES.md#factory-pipeline) |
+| `core` | Dependency injection, safe access, and validation helpers | [Core utilities](docs/FEATURES.md#core-utilities) |
+| `config` | Environment-backed settings, constants, and timeouts | [Configuration](docs/CONFIGURATION.md) |
 
 ## Install
 
@@ -42,6 +43,8 @@ With optional providers:
 ```bash
 pip install flyto-pro-core[openai]    # OpenAI LLM + embeddings
 pip install flyto-pro-core[qdrant]    # Qdrant vector store
+pip install flyto-pro-core[core]      # Flyto2 Core module catalog
+pip install flyto-pro-core[factory]   # Blueprint composition + OpenAI fallback
 pip install flyto-pro-core[full]      # All providers
 ```
 
@@ -132,6 +135,24 @@ container.register_factory("vector_store", lambda: QdrantVectorStore())
 llm = container.get("llm")
 ```
 
+### Factory - Compose A Workflow
+
+```python
+from flyto_blueprint import BlueprintEngine
+from flyto_blueprint.storage.memory import MemoryBackend
+from flyto_pro_core.factory import generate_v2
+
+blueprints = BlueprintEngine(storage=MemoryBackend())
+result = await generate_v2(
+    "Fetch an API and save it to a file",
+    blueprint_engine=blueprints,
+)
+if result.ok:
+    print(result.steps)
+else:
+    print(result.error)
+```
+
 ## Architecture
 
 ```
@@ -154,7 +175,7 @@ flyto-pro-core (open source)     flyto-pro (proprietary)
 ├── interfaces                    ├── knowledge (semantic search)
 ├── agent_runtime                 ├── agent (AI agent core)
 ├── core                          ├── guardian (safety)
-└── config                        └── 50+ enterprise modules
+└── config                        └── enterprise runtime extensions
          │                                    │
          └────────── flyto-ai ────────────────┘
                   (open source)
@@ -166,21 +187,46 @@ flyto-pro-core (open source)     flyto-pro (proprietary)
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - `pydantic >= 2.0.0`
 - `pyyaml >= 6.0`
 
 Optional:
 - `openai >= 1.0.0` (for OpenAI provider)
 - `qdrant-client >= 1.7.0` (for Qdrant provider)
-- `flyto-core >= 1.5.3` (for contract catalog loading)
+- `flyto-core >= 2.26.9, < 3` (for contract catalog loading)
+- `flyto-blueprint >= 0.2.1, < 0.3` (for Factory composition)
+
+## API Reference
+
+The [generated Python API reference](docs/reference/python-api.md) inventories
+all 923 public classes, functions, and methods with signatures, purposes, and
+source links. Domain guides explain contracts and operational boundaries:
+[contract engine](docs/CONTRACT_ENGINE.md),
+[agent runtime](docs/AGENT_RUNTIME.md),
+[cost control](docs/COST_CONTROL.md),
+[providers](docs/PROVIDERS.md), and [Factory](docs/FACTORY.md).
+
+## Configuration
+
+Start with [Configuration](docs/CONFIGURATION.md) and the generated
+[environment reference](docs/reference/environment.md). `.env.example` contains
+safe examples for every literal environment-variable read; credentials remain
+blank.
 
 ## Testing
 
 ```bash
 python -m pytest
 python -m ruff check .
+python scripts/generate-api-reference.py --check
+python scripts/generate-config-reference.py --check
+python scripts/check-documentation.py
+python -m build
 ```
+
+The verification boundary and optional live-service exclusions are mapped in
+[Features](docs/FEATURES.md) and [Testing](tests/README.md).
 
 ## Contributing
 

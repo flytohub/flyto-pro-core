@@ -23,11 +23,12 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from pathlib import Path
-import json
+from typing import Any, Dict, List, Optional
 
 from ..models.module_contract import ModuleContract
 from ..models.port import Port
@@ -62,6 +63,7 @@ class CatalogOutline:
     categories: List[CategoryInfo] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "version": self.version,
             "total_modules": self.total_modules,
@@ -92,6 +94,7 @@ class CatalogDetail:
     modules: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "categories": self.categories,
             "modules": self.modules,
@@ -111,6 +114,7 @@ class ContractRegistry:
     _instance: Optional[ContractRegistry] = None
 
     def __init__(self):
+        """Initialize the ContractRegistry."""
         self._contracts: Dict[str, ModuleContract] = {}
         self._categories: Dict[str, CategoryInfo] = {}
         self._initialized = False
@@ -126,6 +130,7 @@ class ContractRegistry:
         # Try DI container first
         try:
             from flyto_pro_core.core.container import container
+
             if container.has("contract_registry"):
                 return container.get("contract_registry")
         except ImportError:
@@ -142,6 +147,7 @@ class ContractRegistry:
         cls._instance = None
         try:
             from flyto_pro_core.core.container import container
+
             container.reset("contract_registry")
         except ImportError:
             pass
@@ -166,7 +172,9 @@ class ContractRegistry:
         self._build_category_index()
 
         self._initialized = True
-        logger.info(f"ContractRegistry initialized with {len(self._contracts)} contracts")
+        logger.info(
+            f"ContractRegistry initialized with {len(self._contracts)} contracts"
+        )
 
     async def _load_from_core(self) -> None:
         """Load contracts from flyto-core ModuleRegistry."""
@@ -177,7 +185,9 @@ class ContractRegistry:
 
             for module_id, metadata in all_metadata.items():
                 try:
-                    contract = ModuleContract.from_flyto_core_metadata(module_id, metadata)
+                    contract = ModuleContract.from_flyto_core_metadata(
+                        module_id, metadata
+                    )
                     self._contracts[module_id] = contract
                 except Exception as e:
                     logger.warning(f"Failed to load contract for {module_id}: {e}")
@@ -198,8 +208,8 @@ class ContractRegistry:
 
         for file_path in override_dir.glob("*.json"):
             try:
-                with open(file_path) as f:
-                    data = json.load(f)
+                content = await asyncio.to_thread(file_path.read_text, encoding="utf-8")
+                data = json.loads(content)
 
                 if isinstance(data, list):
                     for item in data:
@@ -291,10 +301,7 @@ class ContractRegistry:
 
     def get_by_tags(self, tags: List[str]) -> List[ModuleContract]:
         """Get all contracts with any of the given tags."""
-        return [
-            c for c in self._contracts.values()
-            if any(t in c.tags for t in tags)
-        ]
+        return [c for c in self._contracts.values() if any(t in c.tags for t in tags)]
 
     def search(self, query: str, limit: int = 20) -> List[ModuleContract]:
         """
@@ -354,17 +361,21 @@ class ContractRegistry:
 
         for category in categories:
             for contract in self.get_by_category(category):
-                modules.append({
-                    "module_id": contract.module_id,
-                    "label": contract.label,
-                    "description": contract.description,
-                    "category": contract.category,
-                    "version": contract.version,
-                    "ports": [p.to_dict() for p in contract.ports],
-                    "params_schema": contract.params_schema.to_dict() if contract.params_schema else None,
-                    "tags": contract.tags,
-                    "tier": contract.tier,
-                })
+                modules.append(
+                    {
+                        "module_id": contract.module_id,
+                        "label": contract.label,
+                        "description": contract.description,
+                        "category": contract.category,
+                        "version": contract.version,
+                        "ports": [p.to_dict() for p in contract.ports],
+                        "params_schema": contract.params_schema.to_dict()
+                        if contract.params_schema
+                        else None,
+                        "tags": contract.tags,
+                        "tier": contract.tier,
+                    }
+                )
 
         return CatalogDetail(categories=categories, modules=modules)
 
@@ -408,14 +419,18 @@ class ContractRegistry:
                         other_contract, port_id, target_port.id
                     )
                     if can_connect:
-                        score = self._calculate_match_score(port, target_port, other_contract)
-                        candidates.append({
-                            "module_id": other_contract.module_id,
-                            "port_id": target_port.id,
-                            "label": other_contract.label,
-                            "category": other_contract.category,
-                            "score": score,
-                        })
+                        score = self._calculate_match_score(
+                            port, target_port, other_contract
+                        )
+                        candidates.append(
+                            {
+                                "module_id": other_contract.module_id,
+                                "port_id": target_port.id,
+                                "label": other_contract.label,
+                                "category": other_contract.category,
+                                "score": score,
+                            }
+                        )
             else:
                 # We're looking for what can connect TO this port
                 source_ports = other_contract.get_output_ports()
@@ -424,14 +439,18 @@ class ContractRegistry:
                         contract, source_port.id, port_id
                     )
                     if can_connect:
-                        score = self._calculate_match_score(source_port, port, other_contract)
-                        candidates.append({
-                            "module_id": other_contract.module_id,
-                            "port_id": source_port.id,
-                            "label": other_contract.label,
-                            "category": other_contract.category,
-                            "score": score,
-                        })
+                        score = self._calculate_match_score(
+                            source_port, port, other_contract
+                        )
+                        candidates.append(
+                            {
+                                "module_id": other_contract.module_id,
+                                "port_id": source_port.id,
+                                "label": other_contract.label,
+                                "category": other_contract.category,
+                                "score": score,
+                            }
+                        )
 
         # Sort by score descending
         candidates.sort(key=lambda x: x["score"], reverse=True)
@@ -509,11 +528,12 @@ class ContractRegistry:
             return migrations
 
         # Check if contract has migration info
-        if hasattr(contract, 'migrations'):
+        if hasattr(contract, "migrations"):
             all_migrations = contract.migrations or []
 
             # Parse versions
             from packaging import version
+
             try:
                 from_v = version.parse(from_version)
                 to_v = version.parse(to_version)

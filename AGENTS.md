@@ -17,6 +17,21 @@ Rules:
 - Preserve `flyto-core` boundaries and product-line ownership.
 - Add tests, guards, docs, or handoff notes for release-impacting changes.
 
+## Required Exploration And Verification
+
+Before changing behavior, run `flyto-index scan .`, use `flyto-index search`
+to find the owning symbols, and then use `flyto-index impact` or
+`flyto-index context` for the source areas involved. Confirm the
+current Flyto2 Core and Blueprint contracts instead of copying stale counts or
+examples from prose.
+
+After changes, run `python scripts/verify.py`. Public Python callables require
+docstrings, generated API/config references must be current, and Factory example
+YAML must match the installed supported Blueprint catalog. Run
+`python test_zapier_convert.py` additionally when the sibling `flyto-pro`
+checkout is available; run `python test_closed_loop.py` only against a trusted
+local Flyto2 Core endpoint.
+
 ## Flyto2 Project Memory Contract
 
 Every Flyto2 repository must keep this project-memory scaffold current:

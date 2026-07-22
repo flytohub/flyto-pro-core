@@ -75,6 +75,7 @@ class FlytoDirectory:
     """
 
     def __init__(self, project_path: str):
+        """Initialize the FlytoDirectory."""
         self.project_path = project_path
         self.flyto_path = os.path.join(project_path, ".flyto")
 
@@ -157,9 +158,7 @@ class FlytoDirectory:
 
     def get_artifact_dir(self, step_id: str) -> str:
         """Get artifact directory for step."""
-        path = os.path.join(
-            self.flyto_path, DirectoryStructure.ARTIFACTS_DIR, step_id
-        )
+        path = os.path.join(self.flyto_path, DirectoryStructure.ARTIFACTS_DIR, step_id)
         os.makedirs(path, exist_ok=True)
         return path
 

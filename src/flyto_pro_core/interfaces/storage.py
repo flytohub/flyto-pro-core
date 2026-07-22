@@ -288,6 +288,7 @@ class LocalFileRepository(IFileRepository):
     """Local filesystem implementation of IFileRepository."""
 
     def __init__(self, base_path: Optional[Union[str, Path]] = None):
+        """Initialize the LocalFileRepository."""
         self.base_path = Path(base_path) if base_path else None
 
     def _resolve_path(self, path: Union[str, Path]) -> Path:
@@ -298,6 +299,7 @@ class LocalFileRepository(IFileRepository):
         return p
 
     def read(self, path: Union[str, Path]) -> FileContent:
+        """Read content through this repository implementation."""
         resolved = self._resolve_path(path)
         if not resolved.exists():
             return FileContent(
@@ -319,15 +321,18 @@ class LocalFileRepository(IFileRepository):
         content: str,
         encoding: str = "utf-8",
     ) -> bool:
+        """Write content through this repository implementation."""
         resolved = self._resolve_path(path)
         resolved.parent.mkdir(parents=True, exist_ok=True)
         resolved.write_text(content, encoding=encoding)
         return True
 
     def exists(self, path: Union[str, Path]) -> bool:
+        """Return whether the requested resource exists."""
         return self._resolve_path(path).exists()
 
     def delete(self, path: Union[str, Path]) -> bool:
+        """Delete the requested resource."""
         resolved = self._resolve_path(path)
         if resolved.exists():
             resolved.unlink()
@@ -339,11 +344,10 @@ class LocalFileRepository(IFileRepository):
         pattern: str = "*",
         recursive: bool = False,
     ) -> List[str]:
+        """List files under the requested repository path."""
         resolved = self._resolve_path(directory)
         if not resolved.exists():
             return []
         if recursive:
             return [str(p) for p in resolved.rglob(pattern) if p.is_file()]
         return [str(p) for p in resolved.glob(pattern) if p.is_file()]
-
-

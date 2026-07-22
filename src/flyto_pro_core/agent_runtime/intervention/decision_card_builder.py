@@ -103,6 +103,7 @@ class DecisionCardBuilder:
     """
 
     def __init__(self):
+        """Initialize the DecisionCardBuilder."""
         self._card = DecisionCard()
         self._context = DecisionContext()
 
@@ -209,6 +210,7 @@ class TechToUserTranslator:
     """
 
     def __init__(self):
+        """Initialize the TechToUserTranslator."""
         self._templates: Dict[str, Callable] = {
             "file_delete": self._translate_file_delete,
             "db_modify": self._translate_db_modify,
@@ -373,10 +375,7 @@ class TechToUserTranslator:
             )
 
         builder.option(
-            OptionBuilder()
-            .label("Skip")
-            .description("Do not call the API")
-            .build()
+            OptionBuilder().label("Skip").description("Do not call the API").build()
         )
 
         return builder.context(data).build()
@@ -491,12 +490,8 @@ def card_to_intervention_request(
         intervention_point=point,
         options=options,
         is_blocking=card.is_blocking,
-        current_state_summary=(
-            card.context.additional_context if card.context else {}
-        ),
-        relevant_evidence=(
-            card.context.relevant_evidence if card.context else []
-        ),
+        current_state_summary=(card.context.additional_context if card.context else {}),
+        relevant_evidence=(card.context.relevant_evidence if card.context else []),
         allow_text_input=card.allow_text_input,
         text_input_prompt=card.text_input_prompt,
     )

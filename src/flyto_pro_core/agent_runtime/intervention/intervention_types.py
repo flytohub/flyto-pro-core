@@ -74,10 +74,12 @@ class InterventionPoint:
     details: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize InterventionPoint fields after initialization."""
         if not self.point_id:
             self.point_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "point_id": self.point_id,
             "point_type": self.point_type.value,
@@ -94,6 +96,7 @@ class InterventionPoint:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InterventionPoint":
+        """Create an instance from a dictionary."""
         return cls(
             point_id=data.get("point_id", ""),
             point_type=InterventionType(data.get("point_type", "checkpoint")),
@@ -122,10 +125,12 @@ class InterventionOption:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize InterventionOption fields after initialization."""
         if not self.option_id:
             self.option_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "option_id": self.option_id,
             "label": self.label,
@@ -138,6 +143,7 @@ class InterventionOption:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InterventionOption":
+        """Create an instance from a dictionary."""
         return cls(
             option_id=data.get("option_id", ""),
             label=data.get("label", ""),
@@ -175,6 +181,7 @@ class InterventionRequest:
     text_input_prompt: str = ""
 
     def __post_init__(self):
+        """Normalize InterventionRequest fields after initialization."""
         if not self.request_id:
             self.request_id = str(uuid.uuid4())[:12]
 
@@ -200,6 +207,7 @@ class InterventionRequest:
         return self.options[0] if self.options else None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "request_id": self.request_id,
             "intervention_point": self.intervention_point.to_dict(),
@@ -215,14 +223,13 @@ class InterventionRequest:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InterventionRequest":
+        """Create an instance from a dictionary."""
         return cls(
             request_id=data.get("request_id", ""),
             intervention_point=InterventionPoint.from_dict(
                 data.get("intervention_point", {})
             ),
-            options=[
-                InterventionOption.from_dict(o) for o in data.get("options", [])
-            ],
+            options=[InterventionOption.from_dict(o) for o in data.get("options", [])],
             created_at=data.get("created_at", ""),
             timeout_at=data.get("timeout_at"),
             is_blocking=data.get("is_blocking", True),
@@ -255,6 +262,7 @@ class InterventionResponse:
     user_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "request_id": self.request_id,
             "selected_option_id": self.selected_option_id,
@@ -268,6 +276,7 @@ class InterventionResponse:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InterventionResponse":
+        """Create an instance from a dictionary."""
         return cls(
             request_id=data.get("request_id", ""),
             selected_option_id=data.get("selected_option_id"),

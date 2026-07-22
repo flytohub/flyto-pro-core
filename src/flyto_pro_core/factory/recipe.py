@@ -106,18 +106,19 @@ async def resolve_recipe(
     available_ids = {s["id"] for s in summaries}
 
     # Build messages for LLM
-    user_message = (
-        f"Catalog:\n{catalog_text}\n\n"
-        f"User request: {description}"
-    )
+    user_message = f"Catalog:\n{catalog_text}\n\nUser request: {description}"
 
     # Get or create LLM
     if llm is None:
         try:
             from flyto_pro_core.interfaces.providers.openai_llm import OpenAILLMService
+
             llm = OpenAILLMService()
         except ImportError:
-            return RecipeResult(ok=False, error="No LLM service available. Install: pip install flyto-pro-core[openai]")
+            return RecipeResult(
+                ok=False,
+                error="No LLM service available. Install: pip install flyto-pro-core[openai]",
+            )
 
     # Call LLM
     try:
@@ -130,14 +131,18 @@ async def resolve_recipe(
             max_tokens=500,
             model=llm_model or "gpt-4o-mini",
         )
-        response_text = response.content if hasattr(response, "content") else str(response)
+        response_text = (
+            response.content if hasattr(response, "content") else str(response)
+        )
     except Exception as e:
         return RecipeResult(ok=False, error=f"LLM call failed: {e}")
 
     # Parse response
     parsed = _parse_llm_json(response_text)
     if not parsed:
-        return RecipeResult(ok=False, error=f"Failed to parse LLM response: {response_text[:200]}")
+        return RecipeResult(
+            ok=False, error=f"Failed to parse LLM response: {response_text[:200]}"
+        )
 
     raw_blueprints = parsed.get("blueprints", [])
     _raw_args = parsed.get("args", {})

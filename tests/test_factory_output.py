@@ -36,15 +36,18 @@ OUTPUT_DIR = Path("/tmp/factory_v2_output")
 
 @pytest.fixture(autouse=True)
 def setup_output_dir():
+    """Create the temporary output directory used by this test module."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture
 def engine():
+    """Create an isolated Blueprint engine fixture."""
     return BlueprintEngine(storage=MemoryBackend())
 
 
 def _mock_llm(response_dict):
+    """Create a deterministic mocked LLM response."""
     mock = MagicMock()
     resp = MagicMock()
     resp.content = json.dumps(response_dict)
@@ -53,6 +56,7 @@ def _mock_llm(response_dict):
 
 
 def _save(name, result):
+    """Write one generated workflow fixture for inspection."""
     workflow = {
         "name": name,
         "description": name,
@@ -60,25 +64,35 @@ def _save(name, result):
         "edges": result.edges,
     }
     path = OUTPUT_DIR / f"{name.replace(' ', '_')}.yaml"
-    path.write_text(yaml.dump(workflow, default_flow_style=False, allow_unicode=True, sort_keys=False))
-    print(f"\n{'='*60}")
+    path.write_text(
+        yaml.dump(
+            workflow, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
+    )
+    print(f"\n{'=' * 60}")
     print(f"  OUTPUT: {path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(path.read_text())
     return path
 
 
 @pytest.mark.asyncio
 async def test_api_fetch_save_pipeline(engine):
+    """Verify api fetch save pipeline."""
     result = await generate_v2(
         description="Fetch Flyto2 homepage and save the response",
         blueprint_engine=engine,
-        llm=_mock_llm({
-            "blueprints": ["api_fetch_save"],
-            "args": {
-                "api_fetch_save": {"url": "https://flyto2.com", "path": "/tmp/flyto2-homepage.json"},
-            },
-        }),
+        llm=_mock_llm(
+            {
+                "blueprints": ["api_fetch_save"],
+                "args": {
+                    "api_fetch_save": {
+                        "url": "https://flyto2.com",
+                        "path": "/tmp/flyto2-homepage.json",
+                    },
+                },
+            }
+        ),
     )
     assert result.ok, result.error
     _save("fetch_flyto2_homepage_save_response", result)
@@ -86,16 +100,22 @@ async def test_api_fetch_save_pipeline(engine):
 
 @pytest.mark.asyncio
 async def test_http_to_slack(engine):
+    """Verify http to slack."""
     result = await generate_v2(
         description="Fetch API and notify Slack",
         blueprint_engine=engine,
-        llm=_mock_llm({
-            "blueprints": ["http_get", "slack_notify"],
-            "args": {
-                "http_get": {"url": "https://api.example.com/health"},
-                "slack_notify": {"webhook_url": "https://hooks.slack.com/services/XXX", "text": "API status: ${steps.http_request.data.body}"},
-            },
-        }),
+        llm=_mock_llm(
+            {
+                "blueprints": ["http_get", "slack_notify"],
+                "args": {
+                    "http_get": {"url": "https://api.example.com/health"},
+                    "slack_notify": {
+                        "webhook_url": "https://hooks.slack.com/services/XXX",
+                        "text": "API status: ${steps.http_request.data.body}",
+                    },
+                },
+            }
+        ),
     )
     assert result.ok, result.error
     _save("fetch_api_notify_slack", result)
@@ -103,16 +123,25 @@ async def test_http_to_slack(engine):
 
 @pytest.mark.asyncio
 async def test_ai_summarize_email(engine):
+    """Verify ai summarize email."""
     result = await generate_v2(
         description="AI summarize sales and email to boss",
         blueprint_engine=engine,
-        llm=_mock_llm({
-            "blueprints": ["llm_chat", "email_send"],
-            "args": {
-                "llm_chat": {"prompt": "Summarize today's sales numbers: revenue $12,500, orders 84, returns 3"},
-                "email_send": {"to": "boss@company.com", "subject": "Daily Sales Summary", "body": "${steps.ai_chat.data.response}"},
-            },
-        }),
+        llm=_mock_llm(
+            {
+                "blueprints": ["llm_chat", "email_send"],
+                "args": {
+                    "llm_chat": {
+                        "prompt": "Summarize today's sales numbers: revenue $12,500, orders 84, returns 3"
+                    },
+                    "email_send": {
+                        "to": "reports@flyto2.com",
+                        "subject": "Daily Sales Summary",
+                        "body": "${steps.ai_chat.data.response}",
+                    },
+                },
+            }
+        ),
     )
     assert result.ok, result.error
     _save("ai_summarize_email", result)
@@ -120,17 +149,25 @@ async def test_ai_summarize_email(engine):
 
 @pytest.mark.asyncio
 async def test_scrape_transform_save(engine):
+    """Verify scrape transform save."""
     result = await generate_v2(
         description="Fetch JSON, transform, save to file",
         blueprint_engine=engine,
-        llm=_mock_llm({
-            "blueprints": ["http_get", "json_transform", "file_save"],
-            "args": {
-                "http_get": {"url": "https://api.example.com/users"},
-                "json_transform": {"template": "Total users: ${steps.http_request.data.body}"},
-                "file_save": {"path": "/tmp/report.txt", "content": "${steps.render_template.data.result}"},
-            },
-        }),
+        llm=_mock_llm(
+            {
+                "blueprints": ["http_get", "json_transform", "file_save"],
+                "args": {
+                    "http_get": {"url": "https://api.example.com/users"},
+                    "json_transform": {
+                        "template": "Total users: ${steps.http_request.data.body}"
+                    },
+                    "file_save": {
+                        "path": "/tmp/report.txt",
+                        "content": "${steps.render_template.data.result}",
+                    },
+                },
+            }
+        ),
     )
     assert result.ok, result.error
     _save("fetch_transform_save", result)
@@ -138,19 +175,39 @@ async def test_scrape_transform_save(engine):
 
 @pytest.mark.asyncio
 async def test_five_blueprint_chain(engine):
+    """Verify five blueprint chain."""
     result = await generate_v2(
         description="Full pipeline: split URLs, fetch each, transform, save, notify",
         blueprint_engine=engine,
-        llm=_mock_llm({
-            "blueprints": ["string_split", "http_get", "json_transform", "file_save", "slack_notify"],
-            "args": {
-                "string_split": {"text": "https://a.com\nhttps://b.com", "delimiter": "\n"},
-                "http_get": {"url": "${steps.split_text.data.result}"},
-                "json_transform": {"template": "Fetched: ${steps.http_request.data.body}"},
-                "file_save": {"path": "/tmp/output.txt", "content": "${steps.render_template.data.result}"},
-                "slack_notify": {"webhook_url": "https://hooks.slack.com/xxx", "text": "Pipeline done, saved to /tmp/output.txt"},
-            },
-        }),
+        llm=_mock_llm(
+            {
+                "blueprints": [
+                    "string_split",
+                    "http_get",
+                    "json_transform",
+                    "file_save",
+                    "slack_notify",
+                ],
+                "args": {
+                    "string_split": {
+                        "text": "https://a.com\nhttps://b.com",
+                        "delimiter": "\n",
+                    },
+                    "http_get": {"url": "${steps.split_text.data.result}"},
+                    "json_transform": {
+                        "template": "Fetched: ${steps.http_request.data.body}"
+                    },
+                    "file_save": {
+                        "path": "/tmp/output.txt",
+                        "content": "${steps.render_template.data.result}",
+                    },
+                    "slack_notify": {
+                        "webhook_url": "https://hooks.slack.com/xxx",
+                        "text": "Pipeline done, saved to /tmp/output.txt",
+                    },
+                },
+            }
+        ),
     )
     assert result.ok, result.error
     _save("full_5_step_pipeline", result)

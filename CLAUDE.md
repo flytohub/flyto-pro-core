@@ -12,6 +12,12 @@ Start with:
 
 Never infer or reuse credentials from repository files or handoffs.
 
+Before editing, refresh the local index with `flyto-index scan .` and inspect
+affected symbols with `flyto-index impact` or `flyto-index context`. After
+editing, run the full `python scripts/verify.py` gate. Do not report completion
+from lint alone: tests, generated references, package artifacts, example drift,
+and strict Indexer verification are required.
+
 ## Flyto2 Project Memory Contract
 
 Every Flyto2 repository must keep this project-memory scaffold current:

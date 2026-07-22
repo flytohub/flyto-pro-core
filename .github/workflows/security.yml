@@ -16,7 +16,7 @@ concurrency:
 jobs:
   security:
     name: Secret + Dependency scan
-    uses: flytohub/.github/.github/workflows/reusable-security.yml@main
+    uses: flytohub/.github/.github/workflows/reusable-security.yml@423fe8478c8b7e3d9481c61c65fc3d8e734fac5f
     with:
       stack: python
     permissions:
@@ -25,7 +25,7 @@ jobs:
 
   sbom:
     name: SBOM (CycloneDX)
-    uses: flytohub/.github/.github/workflows/reusable-sbom.yml@main
+    uses: flytohub/.github/.github/workflows/reusable-sbom.yml@423fe8478c8b7e3d9481c61c65fc3d8e734fac5f
     permissions:
       actions: read
       contents: write

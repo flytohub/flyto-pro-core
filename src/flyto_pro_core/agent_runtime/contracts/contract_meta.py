@@ -30,6 +30,7 @@ class ContractMeta:
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
     def __post_init__(self):
+        """Normalize ContractMeta fields after initialization."""
         if not self.checksum:
             self.checksum = self._compute_checksum()
 
@@ -132,7 +133,10 @@ def validate_contract_version(
     except ValueError:
         pass
 
-    return False, f"Version mismatch: contract={contract_meta.version}, runtime={runtime_version}"
+    return (
+        False,
+        f"Version mismatch: contract={contract_meta.version}, runtime={runtime_version}",
+    )
 
 
 class ContractRegistry:
@@ -141,6 +145,7 @@ class ContractRegistry:
     """
 
     def __init__(self):
+        """Initialize the ContractRegistry."""
         self._schemas: Dict[str, Dict[str, Any]] = {}
         self._migrations: Dict[str, List[callable]] = {}
 

@@ -1,7 +1,9 @@
 """
 Closed-loop test: generate YAML → run on local backend → verify execution succeeds.
 
-No manual intervention. Hits localhost:3000/api/workflows/run directly.
+No credentials are loaded by this script. It calls ``FLYTO_API_BASE`` (default:
+``https://localhost:3000``) and disables TLS verification only for that local
+development endpoint.
 
 Usage:
     cd flyto-pro-core
@@ -17,55 +19,30 @@ from pathlib import Path
 import aiohttp
 import yaml
 
-_base = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_base / "flyto-core"))
-sys.path.insert(0, str(_base / "flyto-pro"))
-
-env_path = _base / "flyto-pro" / ".env"
-if env_path.exists():
-    for line in env_path.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
-
-API_BASE = "https://localhost:3000"
+ROOT = Path(__file__).resolve().parent
+API_BASE = os.environ.get("FLYTO_API_BASE", "https://localhost:3000").rstrip("/")
 POLL_INTERVAL = 2
 MAX_WAIT = 60
 
-# Test scenarios: description → test params (values for {{X}} placeholders)
+# Test scenarios use only entries present in flyto-blueprint 0.2.1 and newer.
 SCENARIOS = [
     {
         "description": "Fetch API health check and send Slack notification",
-        "params": {"url": "https://httpbin.org/get", "webhook_url": "https://httpbin.org/post"},
+        "params": {
+            "url": "https://httpbin.org/get",
+            "webhook_url": "https://httpbin.org/post",
+        },
     },
     {
         "description": "Fetch JSON from API and save to file",
         "params": {"url": "https://httpbin.org/get", "content": "hello world"},
     },
     {
-        "description": "Split text and generate a QR code for each line",
-        "params": {"text": "https://google.com\nhttps://github.com"},
-    },
-    {
-        "description": "Fetch a URL and render a text template with the result",
-        "params": {"url": "https://httpbin.org/get", "template": "Result: {{data}}"},
-    },
-    {
-        "description": "Write text content to a file",
-        "params": {"path": "output/hello.txt", "content": "Hello World from Factory v2!"},
-    },
-    {
         "description": "Download a file from URL and save locally",
-        "params": {"url": "https://httpbin.org/get", "path": "downloads/test_download.json"},
-    },
-    {
-        "description": "Generate a QR code from a URL",
-        "params": {"data": "https://flyto2.com"},
-    },
-    {
-        "description": "Split text by newline and process each line",
-        "params": {"text": "line1\nline2\nline3"},
+        "params": {
+            "url": "https://httpbin.org/get",
+            "output": "output/test_download.json",
+        },
     },
 ]
 
@@ -74,27 +51,11 @@ async def generate_yaml(description: str) -> dict:
     """Generate enriched YAML via factory v2 pipeline."""
     from flyto_blueprint import BlueprintEngine
     from flyto_blueprint.storage.memory import MemoryBackend
-    from flyto_pro_core.factory.pipeline import generate_v2
-    from flyto_pro_core.factory.enrich import enrich_template
-    engine = BlueprintEngine(storage=MemoryBackend())
 
-    # Load schemas
-    module_schemas = {}
-    try:
-        from src.pro.factory.sandbox import SandboxExecutor
-        sandbox = SandboxExecutor.from_registry()
-        for mid, ps in sandbox._module_params_schema.items():
-            if ps and isinstance(ps, dict):
-                props = {}
-                req = []
-                for fn, fd in ps.items():
-                    if isinstance(fd, dict):
-                        props[fn] = fd
-                        if fd.get("required"):
-                            req.append(fn)
-                module_schemas[mid] = {"properties": props, "required": req}
-    except Exception:
-        pass
+    from flyto_pro_core.factory.enrich import enrich_template
+    from flyto_pro_core.factory.pipeline import generate_v2
+
+    engine = BlueprintEngine(storage=MemoryBackend())
 
     result = await generate_v2(
         description=description,
@@ -109,13 +70,14 @@ async def generate_yaml(description: str) -> dict:
         edges=result.edges,
         name=description,
         description=description,
-        module_schemas=module_schemas,
     )
 
     return {"ok": True, "template": template, "blueprints": result.recipe.blueprints}
 
 
-async def run_workflow(session: aiohttp.ClientSession, yaml_str: str, params: dict) -> dict:
+async def run_workflow(
+    session: aiohttp.ClientSession, yaml_str: str, params: dict
+) -> dict:
     """Send workflow to /api/workflows/run and return execution result."""
     payload = {
         "workflow_yaml": yaml_str,
@@ -157,6 +119,7 @@ async def poll_execution(session: aiohttp.ClientSession, execution_id: str) -> d
 
 
 async def main():
+    """Run this maintenance or integration script."""
     print("=" * 70)
     print("  CLOSED-LOOP TEST: Generate → Run → Verify")
     print("=" * 70)
@@ -168,7 +131,11 @@ async def main():
     async with aiohttp.ClientSession() as session:
         # Check backend is running
         try:
-            async with session.get(f"{API_BASE}/api/health", ssl=False, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+            async with session.get(
+                f"{API_BASE}/api/health",
+                ssl=False,
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
                 if resp.status != 200:
                     print("ERROR: Backend not responding at", API_BASE)
                     sys.exit(1)
@@ -188,23 +155,48 @@ async def main():
             gen = await generate_yaml(desc)
             if not gen["ok"]:
                 print(f"FAIL: {gen['error']}")
-                results.append({"scenario": desc, "ok": False, "stage": "generate", "error": gen["error"]})
+                results.append(
+                    {
+                        "scenario": desc,
+                        "ok": False,
+                        "stage": "generate",
+                        "error": gen["error"],
+                    }
+                )
                 print()
                 continue
             print(f"OK ({gen['blueprints']})")
 
-            yaml_str = yaml.dump(gen["template"], default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml_str = yaml.dump(
+                gen["template"],
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )
 
             # Save for debugging
             fname = f"closedloop_{i:02d}.yaml"
-            Path(f"output/{fname}").write_text(yaml_str)
+            output_path = ROOT / "output" / fname
+            output_path.parent.mkdir(exist_ok=True)
+            await asyncio.to_thread(
+                output_path.write_text,
+                yaml_str,
+                encoding="utf-8",
+            )
 
             # Step 2: Run
             print("  2. Running workflow...", end=" ", flush=True)
             run_result = await run_workflow(session, yaml_str, params)
             if not run_result.get("ok"):
                 print(f"FAIL: {run_result.get('error', run_result)}")
-                results.append({"scenario": desc, "ok": False, "stage": "run", "error": str(run_result)})
+                results.append(
+                    {
+                        "scenario": desc,
+                        "ok": False,
+                        "stage": "run",
+                        "error": str(run_result),
+                    }
+                )
                 print()
                 continue
 
@@ -224,7 +216,15 @@ async def main():
                 error_detail = ""
                 if poll.get("data"):
                     error_detail = str(poll["data"].get("error", ""))[:200]
-                results.append({"scenario": desc, "ok": False, "stage": "execution", "status": status, "error": error_detail})
+                results.append(
+                    {
+                        "scenario": desc,
+                        "ok": False,
+                        "stage": "execution",
+                        "status": status,
+                        "error": error_detail,
+                    }
+                )
             # Delay between scenarios to avoid overloading execution engine
             await asyncio.sleep(3)
             print()
@@ -239,7 +239,9 @@ async def main():
         icon = "✓" if r["ok"] else "✗"
         line = f"  {icon} {r['scenario']}"
         if not r["ok"]:
-            line += f" [{r.get('stage', '?')}: {r.get('error', r.get('status', ''))[:80]}]"
+            line += (
+                f" [{r.get('stage', '?')}: {r.get('error', r.get('status', ''))[:80]}]"
+            )
         print(line)
     print()
     print(f"  {passed}/{total} passed")

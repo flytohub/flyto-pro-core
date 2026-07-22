@@ -23,8 +23,20 @@ from .selector import select_blueprints
 
 # Output type hints for type-aware wiring
 _DICT_OUTPUT_MODULES = {"http.get", "http.request", "http.paginate"}
-_LIST_OUTPUT_MODULES = {"string.split", "array.filter", "array.map", "array.sort", "data.csv.read"}
-_STRING_INPUT_PARAMS = {"content", "text", "body", "message", "template"}  # params that need string, not dict
+_LIST_OUTPUT_MODULES = {
+    "string.split",
+    "array.filter",
+    "array.map",
+    "array.sort",
+    "data.csv.read",
+}
+_STRING_INPUT_PARAMS = {
+    "content",
+    "text",
+    "body",
+    "message",
+    "template",
+}  # params that need string, not dict
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +48,12 @@ _LIST_PRODUCING_BLUEPRINTS = {
 
 # Modules whose output is a list
 _LIST_PRODUCING_MODULES = {
-    "string.split", "array.filter", "array.map", "array.sort",
-    "data.csv.read", "file.list",
+    "string.split",
+    "array.filter",
+    "array.map",
+    "array.sort",
+    "data.csv.read",
+    "file.list",
 }
 
 # Blueprints that already handle iteration internally
@@ -94,9 +110,22 @@ def _sanitize_recipe_args(
     path, url, prompt, query, input, message — things that carry data between steps.
     """
     _DATA_FLOW_NAMES = {
-        "text", "content", "data", "items", "body", "input",
-        "path", "url", "prompt", "query", "message", "source",
-        "html", "json_data", "csv_data", "template",
+        "text",
+        "content",
+        "data",
+        "items",
+        "body",
+        "input",
+        "path",
+        "url",
+        "prompt",
+        "query",
+        "message",
+        "source",
+        "html",
+        "json_data",
+        "csv_data",
+        "template",
     }
 
     sanitized = {}
@@ -113,7 +142,8 @@ def _sanitize_recipe_args(
         wired_one = False
 
         required_args = [
-            (name, meta) for name, meta in bp.get("args", {}).items()
+            (name, meta)
+            for name, meta in bp.get("args", {}).items()
             if meta.get("required") and name not in bp_args
         ]
 
@@ -122,11 +152,7 @@ def _sanitize_recipe_args(
                 bp_args[arg_name] = "${loop.item}"
                 wired_one = True
                 is_after_foreach = False
-            elif (
-                prev_last_step_id
-                and not wired_one
-                and arg_name in _DATA_FLOW_NAMES
-            ):
+            elif prev_last_step_id and not wired_one and arg_name in _DATA_FLOW_NAMES:
                 # Type-aware: if prev outputs dict and this param needs string,
                 # wire via stringify (prev.result will be JSON string)
                 if prev_outputs_dict and arg_name in _STRING_INPUT_PARAMS:
@@ -164,21 +190,34 @@ async def generate_v2(
     """
     Generate a validated workflow via the recipe-based pipeline (v2).
 
-    Pipeline: select → compose → validate → if fail, retry with next candidates → autofix.
-    Guaranteed: if it returns ok=True, the workflow passes sandbox validation.
+    Pipeline: select → compose → normalize → validate references and modules.
+
+    ``validator`` is retained for API compatibility but is not invoked. Callers
+    that need runtime or sandbox validation must validate the returned workflow
+    with the execution engine before running it.
     """
     # Get or create blueprint engine
     if blueprint_engine is None:
         try:
             from flyto_blueprint import get_engine
+
             blueprint_engine = get_engine()
         except ImportError:
-            return PipelineResult(ok=False, error="flyto-blueprint not installed")
+            return PipelineResult(
+                ok=False,
+                error="flyto-blueprint is not installed; install flyto-pro-core[factory]",
+            )
 
     try:
         from flyto_blueprint.compose import compose_chain  # noqa: F401  (availability probe)
     except ImportError:
-        return PipelineResult(ok=False, error="flyto-blueprint not installed")
+        return PipelineResult(
+            ok=False,
+            error=(
+                "incompatible flyto-blueprint installation; "
+                "flyto-pro-core requires flyto-blueprint>=0.2.1,<0.3"
+            ),
+        )
 
     # Phase 1: Select blueprints
     recipe = select_blueprints(description, blueprint_engine)
@@ -186,23 +225,32 @@ async def generate_v2(
     if not recipe.ok and llm:
         for attempt in range(1, max_retries + 1):
             recipe = await resolve_recipe(
-                description=description, blueprint_engine=blueprint_engine,
-                llm=llm, llm_model=llm_model,
+                description=description,
+                blueprint_engine=blueprint_engine,
+                llm=llm,
+                llm_model=llm_model,
             )
             if recipe.ok:
                 break
 
     if not recipe or not recipe.ok:
-        return PipelineResult(ok=False, error=f"No matching blueprints: {recipe.error if recipe else 'unknown'}")
+        return PipelineResult(
+            ok=False,
+            error=f"No matching blueprints: {recipe.error if recipe else 'unknown'}",
+        )
 
     # Phase 2+4: Compose → Validate → Autofix loop
     result = _compose_and_validate(
-        recipe.blueprints, recipe.args,
-        blueprint_engine._blueprints, blueprint_engine._blocks,
+        recipe.blueprints,
+        recipe.args,
+        blueprint_engine._blueprints,
+        blueprint_engine._blocks,
     )
 
     if result:
-        logger.info("Pipeline v2: %d steps from %s", len(result["steps"]), recipe.blueprints)
+        logger.info(
+            "Pipeline v2: %d steps from %s", len(result["steps"]), recipe.blueprints
+        )
         return PipelineResult(
             ok=True,
             steps=result["steps"],
@@ -236,7 +284,9 @@ def _compose_and_validate(
     )
 
     if not chain_result.get("ok"):
-        logger.warning("Compose failed for %s: %s", blueprint_ids, chain_result.get("error"))
+        logger.warning(
+            "Compose failed for %s: %s", blueprint_ids, chain_result.get("error")
+        )
         return None
 
     steps = chain_result["data"]["steps"]
@@ -306,7 +356,9 @@ def _validate_workflow(
                 if ref_root in ("params", "env", "loop", "steps", "item", "index"):
                     continue
                 if ref_root not in step_ids:
-                    errors.append(f"Unknown step ref '{ref_root}' in {step['id']}.{key}")
+                    errors.append(
+                        f"Unknown step ref '{ref_root}' in {step['id']}.{key}"
+                    )
 
     return errors
 
@@ -340,7 +392,10 @@ def _fix_blueprint_id_refs(
     actual_ids = {s["id"] for s in steps}
 
     def _replace_ref(val: str) -> str:
+        """Replace Blueprint identifiers with actual step identifiers."""
+
         def _sub(m):
+            """Replace one matched reference when a mapping exists."""
             ref_id = m.group(1)
             if ref_id in actual_ids:
                 return m.group(0)  # Already correct
@@ -348,6 +403,7 @@ def _fix_blueprint_id_refs(
                 real_id = bp_to_step[ref_id]
                 return f"${{steps.{real_id}."
             return m.group(0)  # Unknown, leave as is
+
         return _STEP_REF_RE.sub(_sub, val)
 
     for step in steps:
@@ -385,6 +441,7 @@ def _auto_insert_stringify(
     Inserts a stringify step in between and re-wires the ref.
     """
     import re
+
     ref_re = re.compile(r"\$\{(\w+)\.([\w.]+)\}")
 
     i = 0
@@ -417,18 +474,25 @@ def _auto_insert_stringify(
             # Re-wire current step to use stringify output
             params[key] = f"${{{stringify_id}.data.result}}"
             # Add edge
-            edges.append({
-                "source": ref_step_id,
-                "target": stringify_id,
-            })
-            edges.append({
-                "source": stringify_id,
-                "target": step["id"],
-            })
+            edges.append(
+                {
+                    "source": ref_step_id,
+                    "target": stringify_id,
+                }
+            )
+            edges.append(
+                {
+                    "source": stringify_id,
+                    "target": step["id"],
+                }
+            )
             # Remove old direct edge if exists
             edges[:] = [
-                e for e in edges
-                if not (e.get("source") == ref_step_id and e.get("target") == step["id"])
+                e
+                for e in edges
+                if not (
+                    e.get("source") == ref_step_id and e.get("target") == step["id"]
+                )
             ]
             i += 1  # Skip the inserted step
             break  # Only fix one param per step
@@ -443,8 +507,7 @@ def _clean_params(steps: List[Dict[str, Any]]) -> None:
         for key, val in params.items():
             # Nested dict with ${...} or {{...}} — likely LLM hallucination
             if isinstance(val, dict) and any(
-                isinstance(v, str) and ("${" in v or "{{" in v)
-                for v in val.values()
+                isinstance(v, str) and ("${" in v or "{{" in v) for v in val.values()
             ):
                 to_remove.append(key)
         for key in to_remove:

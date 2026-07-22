@@ -84,7 +84,9 @@ def _fix_module_typo(
     candidates = get_close_matches(bad_module, list(known_modules), n=1, cutoff=0.6)
     if not candidates:
         # Try prefix match
-        candidates = [m for m in known_modules if m.startswith(bad_module.split(".")[0] + ".")]
+        candidates = [
+            m for m in known_modules if m.startswith(bad_module.split(".")[0] + ".")
+        ]
         if not candidates:
             return False
         candidates = candidates[:1]
@@ -159,7 +161,11 @@ def _fix_variable_ref(
         re.IGNORECASE,
     )
     if not match:
-        match = re.search(r"(?:invalid|unknown).*(?:step|reference).*['\"](\w+)['\"]", error, re.IGNORECASE)
+        match = re.search(
+            r"(?:invalid|unknown).*(?:step|reference).*['\"](\w+)['\"]",
+            error,
+            re.IGNORECASE,
+        )
     if not match:
         return False
 

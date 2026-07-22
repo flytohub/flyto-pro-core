@@ -8,10 +8,12 @@ Provides helpers to capture observations from:
 - Network requests
 """
 
+import asyncio
 import hashlib
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..observation import (
@@ -75,8 +77,10 @@ async def capture_browser_observation(
             # Capture screenshot if path provided
             if screenshot_path:
                 await page.screenshot(path=screenshot_path)
-                with open(screenshot_path, "rb") as f:
-                    screenshot_hash = hashlib.sha256(f.read()).hexdigest()[:16]
+                screenshot_bytes = await asyncio.to_thread(
+                    Path(screenshot_path).read_bytes
+                )
+                screenshot_hash = hashlib.sha256(screenshot_bytes).hexdigest()[:16]
 
             # Capture DOM snapshots for specific selectors
             if dom_selectors:
@@ -85,7 +89,9 @@ async def capture_browser_observation(
                         elements = await page.query_selector_all(selector)
                         dom_snapshot[selector] = {
                             "count": len(elements),
-                            "visible": await elements[0].is_visible() if elements else False,
+                            "visible": await elements[0].is_visible()
+                            if elements
+                            else False,
                         }
                     except Exception:
                         dom_snapshot[selector] = {"count": 0, "visible": False}
@@ -197,12 +203,12 @@ def capture_file_observation(
     created = []
     modified = []
 
-    for path in (created_files or []):
+    for path in created_files or []:
         info = _get_file_info(path)
         if info:
             created.append(info)
 
-    for path in (modified_files or []):
+    for path in modified_files or []:
         info = _get_file_info(path)
         if info:
             modified.append(info)
@@ -290,6 +296,7 @@ class ObservationAdapter:
     """
 
     def __init__(self):
+        """Initialize the ObservationAdapter."""
         self._collector = ObservationCollector()
 
     async def capture_full(

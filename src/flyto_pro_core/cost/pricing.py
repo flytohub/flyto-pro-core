@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModelPricing:
     """Pricing for a single model."""
+
     model_id: str
     prompt_cost_per_1k: float  # USD per 1K prompt tokens
     completion_cost_per_1k: float  # USD per 1K completion tokens

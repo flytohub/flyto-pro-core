@@ -72,7 +72,10 @@ class ConnectionPolicy:
     def allows_from(self, module_id: str, category: str) -> bool:
         """Check if connection from given module is allowed."""
         # Check blocklist first
-        if module_id in self.cannot_connect_from or category in self.cannot_connect_from:
+        if (
+            module_id in self.cannot_connect_from
+            or category in self.cannot_connect_from
+        ):
             return False
 
         # If allowlist is empty, allow all (except blocked)
@@ -93,6 +96,7 @@ class ConnectionPolicy:
         return module_id in self.can_connect_to or category in self.can_connect_to
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "can_connect_from": self.can_connect_from,
             "cannot_connect_from": self.cannot_connect_from,
@@ -104,6 +108,7 @@ class ConnectionPolicy:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ConnectionPolicy:
+        """Create an instance from a dictionary."""
         return cls(
             can_connect_from=data.get("can_connect_from", []),
             cannot_connect_from=data.get("cannot_connect_from", []),
@@ -189,7 +194,9 @@ class ModuleContract:
         """Get all control flow ports."""
         return [p for p in self.ports if p.edge_type == EdgeType.CONTROL]
 
-    def can_connect_to(self, other: ModuleContract, from_port_id: str, to_port_id: str) -> tuple[bool, Optional[str]]:
+    def can_connect_to(
+        self, other: ModuleContract, from_port_id: str, to_port_id: str
+    ) -> tuple[bool, Optional[str]]:
         """
         Check if this module can connect to another.
 
@@ -218,23 +225,47 @@ class ModuleContract:
 
         # Check edge type compatibility
         if from_port.edge_type != to_port.edge_type:
-            return False, f"Edge type mismatch: {from_port.edge_type.value} -> {to_port.edge_type.value}"
+            return (
+                False,
+                f"Edge type mismatch: {from_port.edge_type.value} -> {to_port.edge_type.value}",
+            )
 
         # Check data type compatibility
         if not from_port.is_compatible_type(to_port):
-            return False, f"Data type mismatch: {from_port.data_type} -> {to_port.data_type}"
+            return (
+                False,
+                f"Data type mismatch: {from_port.data_type} -> {to_port.data_type}",
+            )
 
         # Check connection policy
         if not self.connection_policy.allows_to(other.module_id, other.category):
-            return False, f"Connection policy blocks {self.module_id} -> {other.module_id}"
+            return (
+                False,
+                f"Connection policy blocks {self.module_id} -> {other.module_id}",
+            )
         if not other.connection_policy.allows_from(self.module_id, self.category):
-            return False, f"Connection policy blocks {self.module_id} -> {other.module_id}"
+            return (
+                False,
+                f"Connection policy blocks {self.module_id} -> {other.module_id}",
+            )
 
         # Check port-level restrictions
-        if from_port.rejects_from and (other.module_id in from_port.rejects_from or other.category in from_port.rejects_from):
-            return False, f"Port '{from_port_id}' rejects connection from {other.module_id}"
-        if to_port.rejects_from and (self.module_id in to_port.rejects_from or self.category in to_port.rejects_from):
-            return False, f"Port '{to_port_id}' rejects connection from {self.module_id}"
+        if from_port.rejects_from and (
+            other.module_id in from_port.rejects_from
+            or other.category in from_port.rejects_from
+        ):
+            return (
+                False,
+                f"Port '{from_port_id}' rejects connection from {other.module_id}",
+            )
+        if to_port.rejects_from and (
+            self.module_id in to_port.rejects_from
+            or self.category in to_port.rejects_from
+        ):
+            return (
+                False,
+                f"Port '{to_port_id}' rejects connection from {self.module_id}",
+            )
 
         return True, None
 
@@ -280,8 +311,12 @@ class ModuleContract:
             "label": self.label,
             "description": self.description,
             "ports": [p.to_dict() for p in self.ports],
-            "params_schema": self.params_schema.to_dict() if self.params_schema else None,
-            "output_schema": self.output_schema.to_dict() if self.output_schema else None,
+            "params_schema": self.params_schema.to_dict()
+            if self.params_schema
+            else None,
+            "output_schema": self.output_schema.to_dict()
+            if self.output_schema
+            else None,
             "connection_policy": self.connection_policy.to_dict(),
             "tags": self.tags,
             "tier": self.tier,
@@ -325,7 +360,9 @@ class ModuleContract:
         )
 
     @classmethod
-    def from_flyto_core_metadata(cls, module_id: str, metadata: Dict[str, Any]) -> ModuleContract:
+    def from_flyto_core_metadata(
+        cls, module_id: str, metadata: Dict[str, Any]
+    ) -> ModuleContract:
         """
         Create a ModuleContract from flyto-core registry metadata.
 
@@ -345,7 +382,9 @@ class ModuleContract:
         # Parse params_schema
         params_schema = None
         if "params_schema" in metadata:
-            params_schema = ParamsSchema.from_flyto_core_schema(metadata["params_schema"])
+            params_schema = ParamsSchema.from_flyto_core_schema(
+                metadata["params_schema"]
+            )
 
         # Parse output_schema
         output_schema = None
@@ -364,7 +403,9 @@ class ModuleContract:
         return cls(
             module_id=module_id,
             version=metadata.get("version", "1.0.0"),
-            category=metadata.get("category", module_id.split(".")[0] if "." in module_id else ""),
+            category=metadata.get(
+                "category", module_id.split(".")[0] if "." in module_id else ""
+            ),
             label=label,
             description=description,
             ports=ports,
@@ -392,12 +433,26 @@ class ControlFlowContracts:
             description="Conditional branching based on a condition",
             ports=[
                 Port(id="in", direction=PortDirection.INPUT, edge_type=EdgeType.DATA),
-                Port(id="true", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL, label="True"),
-                Port(id="false", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL, label="False"),
+                Port(
+                    id="true",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="True",
+                ),
+                Port(
+                    id="false",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="False",
+                ),
             ],
-            params_schema=ParamsSchema(params={
-                "condition": ParamDef(type="expression", required=True, label="Condition"),
-            }),
+            params_schema=ParamsSchema(
+                params={
+                    "condition": ParamDef(
+                        type="expression", required=True, label="Condition"
+                    ),
+                }
+            ),
         )
 
     @staticmethod
@@ -410,17 +465,36 @@ class ControlFlowContracts:
             label="Loop",
             description="Iterate over items",
             ports=[
-                Port(id="in", direction=PortDirection.INPUT, edge_type=EdgeType.DATA,
-                     data_type="array"),
-                Port(id="body", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     label="Loop Body", scope_provides=["loop.item", "loop.index"]),
-                Port(id="done", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     label="Done"),
+                Port(
+                    id="in",
+                    direction=PortDirection.INPUT,
+                    edge_type=EdgeType.DATA,
+                    data_type="array",
+                ),
+                Port(
+                    id="body",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="Loop Body",
+                    scope_provides=["loop.item", "loop.index"],
+                ),
+                Port(
+                    id="done",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="Done",
+                ),
             ],
-            params_schema=ParamsSchema(params={
-                "items": ParamDef(type="expression", required=True, label="Items to loop"),
-                "item_var": ParamDef(type="string", default="item", label="Item variable name"),
-            }),
+            params_schema=ParamsSchema(
+                params={
+                    "items": ParamDef(
+                        type="expression", required=True, label="Items to loop"
+                    ),
+                    "item_var": ParamDef(
+                        type="string", default="item", label="Item variable name"
+                    ),
+                }
+            ),
         )
 
     @staticmethod
@@ -434,15 +508,28 @@ class ControlFlowContracts:
             description="Multi-way branching based on value",
             ports=[
                 Port(id="in", direction=PortDirection.INPUT, edge_type=EdgeType.DATA),
-                Port(id="case:*", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     dynamic=True, label="Case"),
-                Port(id="default", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     label="Default"),
+                Port(
+                    id="case:*",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    dynamic=True,
+                    label="Case",
+                ),
+                Port(
+                    id="default",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="Default",
+                ),
             ],
-            params_schema=ParamsSchema(params={
-                "value": ParamDef(type="expression", required=True, label="Value to switch on"),
-                "cases": ParamDef(type="array", required=True, label="Case values"),
-            }),
+            params_schema=ParamsSchema(
+                params={
+                    "value": ParamDef(
+                        type="expression", required=True, label="Value to switch on"
+                    ),
+                    "cases": ParamDef(type="array", required=True, label="Case values"),
+                }
+            ),
         )
 
     @staticmethod
@@ -456,11 +543,24 @@ class ControlFlowContracts:
             description="Error handling wrapper",
             ports=[
                 Port(id="in", direction=PortDirection.INPUT, edge_type=EdgeType.DATA),
-                Port(id="try", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     label="Try"),
-                Port(id="catch", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     label="Catch", scope_provides=["error.message", "error.type"]),
-                Port(id="finally", direction=PortDirection.OUTPUT, edge_type=EdgeType.CONTROL,
-                     label="Finally"),
+                Port(
+                    id="try",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="Try",
+                ),
+                Port(
+                    id="catch",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="Catch",
+                    scope_provides=["error.message", "error.type"],
+                ),
+                Port(
+                    id="finally",
+                    direction=PortDirection.OUTPUT,
+                    edge_type=EdgeType.CONTROL,
+                    label="Finally",
+                ),
             ],
         )

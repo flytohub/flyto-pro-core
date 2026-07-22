@@ -8,7 +8,7 @@ version = "0.1.2"
 description = "Open-source core for Flyto2 Pro — contracts, cost control, interfaces, and agent runtime"
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "Flyto2 Team", email = "team@flyto2.com"}
 ]
@@ -23,22 +23,33 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
     "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 openai = ["openai>=1.0.0"]
 qdrant = ["qdrant-client>=1.7.0"]
-blueprint = ["flyto-blueprint>=0.2.0"]
+core = ["flyto-core>=2.26.9,<3"]
+blueprint = ["flyto-blueprint>=0.2.1,<0.3"]
+integration = ["aiohttp>=3.9"]
 factory = ["flyto-pro-core[blueprint,openai]"]
-full = ["flyto-pro-core[openai,qdrant,blueprint]"]
+full = ["flyto-pro-core[core,openai,qdrant,blueprint]"]
 dev = [
+    "build>=1.2",
+    "mypy>=1.10",
+    "pip-audit>=2.9",
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
     "ruff>=0.1.0",
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.urls]
@@ -60,4 +71,4 @@ asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"

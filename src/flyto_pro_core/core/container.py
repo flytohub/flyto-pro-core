@@ -38,8 +38,9 @@ T = TypeVar("T")
 
 class ServiceScope(Enum):
     """Service lifetime scope."""
-    SINGLETON = "singleton"   # One instance for entire app
-    TRANSIENT = "transient"   # New instance each time
+
+    SINGLETON = "singleton"  # One instance for entire app
+    TRANSIENT = "transient"  # New instance each time
 
 
 class ServiceDescriptor:
@@ -52,6 +53,7 @@ class ServiceDescriptor:
         instance: Optional[Any] = None,
         scope: ServiceScope = ServiceScope.SINGLETON,
     ):
+        """Initialize the ServiceDescriptor."""
         self.name = name
         self.factory = factory
         self.instance = instance
@@ -93,6 +95,7 @@ class ServiceContainer:
     """
 
     def __init__(self):
+        """Initialize the ServiceContainer."""
         self._services: Dict[str, ServiceDescriptor] = {}
         self._lock = threading.RLock()
 
@@ -225,7 +228,9 @@ def register_core_services() -> None:
     Called during application startup or via flyto_pro.configure().
     Skips services that are already registered (e.g. by configure()).
     """
+
     def _register_if_missing(name: str, factory):
+        """Register a service only when no descriptor exists."""
         if not container.has(name):
             container.register_factory(name, factory)
 
@@ -298,7 +303,9 @@ def _create_vector_store():
         import os
 
         if os.getenv("QDRANT_URL"):
-            from flyto_pro_core.interfaces.providers.qdrant_store import QdrantVectorStore
+            from flyto_pro_core.interfaces.providers.qdrant_store import (
+                QdrantVectorStore,
+            )
 
             return QdrantVectorStore()
         logger.debug("No QDRANT_URL set, vector_store not created")
@@ -342,6 +349,7 @@ def _create_contract_registry():
     """Create contract registry."""
     try:
         from flyto_pro_core.contract.registry.contract_registry import ContractRegistry
+
         return ContractRegistry()
     except Exception as e:
         logger.error(f"Failed to create ContractRegistry: {e}")
@@ -352,6 +360,7 @@ def _create_contract_engine():
     """Create contract engine."""
     try:
         from flyto_pro_core.contract.engine import ContractEngine
+
         return ContractEngine()
     except Exception as e:
         logger.error(f"Failed to create ContractEngine: {e}")
@@ -359,6 +368,7 @@ def _create_contract_engine():
 
 
 # Convenience functions for type-safe access
+
 
 def get_qdrant_client():
     """Get Qdrant client from container."""

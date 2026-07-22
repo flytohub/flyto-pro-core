@@ -59,10 +59,12 @@ class StepArtifact:
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
     def __post_init__(self):
+        """Normalize StepArtifact fields after initialization."""
         if not self.artifact_id:
             self.artifact_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "artifact_id": self.artifact_id,
             "artifact_type": self.artifact_type,
@@ -75,6 +77,7 @@ class StepArtifact:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "StepArtifact":
+        """Create an instance from a dictionary."""
         return cls(
             artifact_id=data.get("artifact_id", ""),
             artifact_type=data.get("artifact_type", ""),
@@ -124,6 +127,7 @@ class Step:
     max_retries: int = 3
 
     def __post_init__(self):
+        """Normalize Step fields after initialization."""
         if not self.step_id:
             self.step_id = str(uuid.uuid4())[:8]
 
@@ -153,6 +157,7 @@ class Step:
         self.artifacts.append(artifact)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "step_id": self.step_id,
             "task_id": self.task_id,
@@ -176,6 +181,7 @@ class Step:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Step":
+        """Create an instance from a dictionary."""
         return cls(
             step_id=data.get("step_id", ""),
             task_id=data.get("task_id", ""),
@@ -188,9 +194,7 @@ class Step:
             started_at=data.get("started_at"),
             completed_at=data.get("completed_at"),
             duration_ms=data.get("duration_ms", 0),
-            artifacts=[
-                StepArtifact.from_dict(a) for a in data.get("artifacts", [])
-            ],
+            artifacts=[StepArtifact.from_dict(a) for a in data.get("artifacts", [])],
             observation_id=data.get("observation_id"),
             verification_id=data.get("verification_id"),
             verification_passed=data.get("verification_passed"),
@@ -215,14 +219,16 @@ class TaskChecklist:
     ) -> str:
         """Add checklist item."""
         item_id = str(uuid.uuid4())[:8]
-        self.items.append({
-            "item_id": item_id,
-            "description": description,
-            "required": required,
-            "checked": False,
-            "assertion_id": assertion_id,
-            "checked_at": None,
-        })
+        self.items.append(
+            {
+                "item_id": item_id,
+                "description": description,
+                "required": required,
+                "checked": False,
+                "assertion_id": assertion_id,
+                "checked_at": None,
+            }
+        )
         return item_id
 
     def check_item(self, item_id: str, passed: bool = True) -> None:
@@ -243,9 +249,7 @@ class TaskChecklist:
         total = len(self.items)
         checked = sum(1 for i in self.items if i["checked"])
         required_total = sum(1 for i in self.items if i["required"])
-        required_checked = sum(
-            1 for i in self.items if i["required"] and i["checked"]
-        )
+        required_checked = sum(1 for i in self.items if i["required"] and i["checked"])
 
         return {
             "total": total,
@@ -257,6 +261,7 @@ class TaskChecklist:
         }
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "items": self.items,
             "auto_generated": self.auto_generated,
@@ -264,6 +269,7 @@ class TaskChecklist:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TaskChecklist":
+        """Create an instance from a dictionary."""
         return cls(
             items=data.get("items", []),
             auto_generated=data.get("auto_generated", True),
@@ -318,6 +324,7 @@ class Task:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize Task fields after initialization."""
         if not self.task_id:
             self.task_id = str(uuid.uuid4())[:8]
 
@@ -356,9 +363,7 @@ class Task:
     def get_progress(self) -> Dict[str, Any]:
         """Get task progress."""
         total_steps = len(self.steps)
-        completed_steps = sum(
-            1 for s in self.steps if s.status == StepStatus.COMPLETED
-        )
+        completed_steps = sum(1 for s in self.steps if s.status == StepStatus.COMPLETED)
         failed_steps = sum(1 for s in self.steps if s.status == StepStatus.FAILED)
 
         return {
@@ -375,6 +380,7 @@ class Task:
         }
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "meta": self.meta.to_dict(),
             "task_id": self.task_id,
@@ -398,6 +404,7 @@ class Task:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Task":
+        """Create an instance from a dictionary."""
         return cls(
             meta=ContractMeta.from_dict(data.get("meta", {})),
             task_id=data.get("task_id", ""),
@@ -463,6 +470,7 @@ class Goal:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize Goal fields after initialization."""
         if not self.goal_id:
             self.goal_id = str(uuid.uuid4())[:8]
 
@@ -486,9 +494,7 @@ class Goal:
     def get_progress(self) -> Dict[str, Any]:
         """Get goal progress."""
         total_tasks = len(self.tasks)
-        completed_tasks = sum(
-            1 for t in self.tasks if t.status == TaskStatus.COMPLETED
-        )
+        completed_tasks = sum(1 for t in self.tasks if t.status == TaskStatus.COMPLETED)
         failed_tasks = sum(1 for t in self.tasks if t.status == TaskStatus.FAILED)
 
         # Calculate step-level progress
@@ -525,6 +531,7 @@ class Goal:
         self.completed_at = datetime.utcnow().isoformat()
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "meta": self.meta.to_dict(),
             "goal_id": self.goal_id,
@@ -545,6 +552,7 @@ class Goal:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Goal":
+        """Create an instance from a dictionary."""
         return cls(
             meta=ContractMeta.from_dict(data.get("meta", {})),
             goal_id=data.get("goal_id", ""),

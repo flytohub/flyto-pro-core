@@ -59,6 +59,7 @@ class ProposalMetadata:
     interpreted_intent: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "source_agent_id": self.source_agent_id,
             "source_agent_type": self.source_agent_type,
@@ -74,6 +75,7 @@ class ProposalMetadata:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ProposalMetadata":
+        """Create an instance from a dictionary."""
         return cls(
             source_agent_id=data.get("source_agent_id", ""),
             source_agent_type=data.get("source_agent_type", ""),
@@ -100,10 +102,12 @@ class ProposalRevision:
     previous_revision_id: str = ""
 
     def __post_init__(self):
+        """Normalize ProposalRevision fields after initialization."""
         if not self.revision_id:
             self.revision_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "revision_id": self.revision_id,
             "revision_number": self.revision_number,
@@ -126,10 +130,12 @@ class ProposalFeedback:
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
     def __post_init__(self):
+        """Normalize ProposalFeedback fields after initialization."""
         if not self.feedback_id:
             self.feedback_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "feedback_id": self.feedback_id,
             "feedback_type": self.feedback_type,
@@ -197,6 +203,7 @@ class PlanProposal:
     execution_result: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
+        """Normalize PlanProposal fields after initialization."""
         if not self.proposal_id:
             self.proposal_id = str(uuid.uuid4())[:12]
         if not self.updated_at:
@@ -272,6 +279,7 @@ class PlanProposal:
         return feedback
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "meta": self.meta.to_dict(),
             "proposal_id": self.proposal_id,
@@ -298,6 +306,7 @@ class PlanProposal:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PlanProposal":
+        """Create an instance from a dictionary."""
         return cls(
             meta=ContractMeta.from_dict(data.get("meta", {})),
             proposal_id=data.get("proposal_id", ""),
@@ -317,12 +326,8 @@ class PlanProposal:
             risk_factors=data.get("risk_factors", []),
             requires_user_approval=data.get("requires_user_approval", False),
             current_revision=data.get("current_revision", 0),
-            revisions=[
-                ProposalRevision(**r) for r in data.get("revisions", [])
-            ],
-            feedback=[
-                ProposalFeedback(**f) for f in data.get("feedback", [])
-            ],
+            revisions=[ProposalRevision(**r) for r in data.get("revisions", [])],
+            feedback=[ProposalFeedback(**f) for f in data.get("feedback", [])],
             execution_started_at=data.get("execution_started_at"),
             execution_completed_at=data.get("execution_completed_at"),
             execution_result=data.get("execution_result"),
@@ -348,6 +353,7 @@ class PlanProposalBuilder:
     """Builder for creating plan proposals."""
 
     def __init__(self):
+        """Initialize the PlanProposalBuilder."""
         self._proposal = PlanProposal()
 
     def title(self, title: str) -> "PlanProposalBuilder":
@@ -448,7 +454,15 @@ PLAN_PROPOSAL_SCHEMA = {
     "properties": {
         "proposal_id": {"type": "string"},
         "status": {
-            "enum": ["draft", "submitted", "approved", "rejected", "executing", "completed", "failed"]
+            "enum": [
+                "draft",
+                "submitted",
+                "approved",
+                "rejected",
+                "executing",
+                "completed",
+                "failed",
+            ]
         },
         "priority": {"enum": ["low", "normal", "high", "urgent"]},
         "title": {"type": "string"},

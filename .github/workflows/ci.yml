@@ -1,8 +1,5 @@
 name: CI
 
-# Engineering Baseline Standard (FLYA-11) — Python stack.
-# ruff + mypy + pytest + pip-audit on every PR and every push to main.
-
 on:
   pull_request:
     branches: [main]
@@ -18,54 +15,76 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: lint
+  lint-and-docs:
+    name: Lint and generated contracts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: '3.12'
-      - run: python -m pip install --upgrade pip
-      - run: pip install ruff mypy
-      # ruff config lives in pyproject.toml (line-length 88, py39 target).
-      - name: ruff
-        run: ruff check src/
-      # Advisory until the package is fully type-annotated — the repo has
-      # no mypy config yet, so this surfaces typing debt without blocking
-      # baseline rollout. Promote to a hard gate once src/ is clean.
-      - name: mypy (advisory)
-        run: mypy src/ --ignore-missing-imports
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip "setuptools>=83" wheel
+      - run: python -m pip install ".[dev,full]"
+      - run: python -m ruff check .
+      - run: python scripts/generate-api-reference.py --check
+      - run: python scripts/generate-config-reference.py --check
+      - run: python scripts/check-documentation.py
+      - run: python generate_real.py --check
+      - name: Mypy advisory
+        run: python -m mypy src/ --ignore-missing-imports
         continue-on-error: true
 
   test:
-    name: test
+    name: Python ${{ matrix.python-version }} tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --upgrade pip
-      - run: pip install ".[dev]"
-      - name: pytest
-        run: pytest tests/ -v
+          cache: pip
+      - run: python -m pip install --upgrade pip "setuptools>=83" wheel
+      - run: python -m pip install ".[dev,full]"
+      - run: python -m pytest -q
+      - run: python test_stress.py
 
-  security:
-    name: security
+  build-and-verify:
+    name: Build and closed-loop verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          python-version: '3.12'
-      - run: python -m pip install --upgrade pip pip-audit
-      - run: pip install .
-      # Informational — audits the resolved dependency tree. Reserved as
-      # a hard gate for published packages (FLYA-11 checklist item 6).
-      - name: pip-audit
-        run: pip-audit
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip "setuptools>=83" wheel
+      - run: python -m pip install ".[dev,full]"
+      - name: Install pinned Flyto2 Indexer
+        run: >-
+          python -m pip install
+          "git+https://github.com/flytohub/flyto-indexer.git@8e2e51d5e9e91aa83ee51c38cf99276babf4cdb4"
+      - name: Verify source, tests, docs, build, artifacts, and index
+        run: python scripts/verify.py
+      - name: Verify Flyto2 Indexer closed loop
+        run: flyto-index verify . --strict
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip "setuptools>=83" wheel
+      - run: python -m pip install ".[full]" pip-audit
+      - run: python -m pip check
+      - run: python -m pip_audit

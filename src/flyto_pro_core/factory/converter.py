@@ -16,13 +16,32 @@ from typing import Any, Dict, List, Optional
 # Module output type hints
 _DICT_OUTPUT = {"http.get", "http.request", "http.webhook_wait", "http.paginate"}
 _STRING_OUTPUT = {
-    "string.template", "string.split", "llm.chat", "ai.extract",
-    "email.send", "slack.send", "file.read", "pdf.parse", "image.ocr",
+    "string.template",
+    "string.split",
+    "llm.chat",
+    "ai.extract",
+    "email.send",
+    "slack.send",
+    "file.read",
+    "pdf.parse",
+    "image.ocr",
 }
 _LIST_OUTPUT = {"string.split", "array.filter", "array.map", "data.csv.read"}
 
 # Params that carry data between steps (need wiring)
-_DATA_PARAMS = {"text", "content", "body", "data", "message", "prompt", "query", "input", "template", "path", "url"}
+_DATA_PARAMS = {
+    "text",
+    "content",
+    "body",
+    "data",
+    "message",
+    "prompt",
+    "query",
+    "input",
+    "template",
+    "path",
+    "url",
+}
 
 # Known required params per module (most important ones)
 _MODULE_REQUIRED_PARAMS: Dict[str, List[str]] = {
@@ -75,21 +94,30 @@ def modules_to_workflow(
     for idx, module_id in enumerate(modules):
         step_id = _make_step_id(module_id, idx)
         params = _build_params(
-            module_id, idx, prev_step_id, prev_output_field, prev_module, module_schemas,
+            module_id,
+            idx,
+            prev_step_id,
+            prev_output_field,
+            prev_module,
+            module_schemas,
         )
 
-        steps.append({
-            "id": step_id,
-            "module": module_id,
-            "label": _module_to_label(module_id),
-            "params": params,
-        })
+        steps.append(
+            {
+                "id": step_id,
+                "module": module_id,
+                "label": _module_to_label(module_id),
+                "params": params,
+            }
+        )
 
         if prev_step_id:
-            edges.append({
-                "source": prev_step_id,
-                "target": step_id,
-            })
+            edges.append(
+                {
+                    "source": prev_step_id,
+                    "target": step_id,
+                }
+            )
 
         prev_step_id = step_id
         prev_module = module_id
@@ -149,7 +177,13 @@ def _build_params(
         if prev_step_id and not wired_one and param_name in _DATA_PARAMS:
             # Wire to previous step output
             # If prev outputs dict and this needs string, add stringify note
-            if prev_module in _DICT_OUTPUT and param_name in ("text", "content", "body", "message", "template"):
+            if prev_module in _DICT_OUTPUT and param_name in (
+                "text",
+                "content",
+                "body",
+                "message",
+                "template",
+            ):
                 # Still wire — stringify is handled by _auto_insert_stringify in pipeline
                 params[param_name] = f"${{{prev_step_id}.{prev_output_field}}}"
             else:

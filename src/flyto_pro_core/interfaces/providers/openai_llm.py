@@ -83,6 +83,7 @@ class OpenAILLMService(ILLMService):
         base_url: Optional[str] = None,
         **client_kwargs: Any,
     ):
+        """Initialize the OpenAILLMService."""
         self._model = model
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         self._base_url = base_url
@@ -90,6 +91,7 @@ class OpenAILLMService(ILLMService):
         self._client = None
 
     def _get_client(self):
+        """Create or return the lazily initialized provider client."""
         if self._client is None:
             try:
                 from openai import AsyncOpenAI
@@ -114,6 +116,7 @@ class OpenAILLMService(ILLMService):
         max_tokens: Optional[int] = None,
         **kwargs: Any,
     ) -> LLMResponse:
+        """Generate one complete model response."""
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
@@ -133,6 +136,7 @@ class OpenAILLMService(ILLMService):
         max_tokens: Optional[int] = None,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
+        """Stream a generated model response."""
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
@@ -158,6 +162,7 @@ class OpenAILLMService(ILLMService):
         tool_choice: Optional[str] = None,
         **kwargs: Any,
     ) -> LLMResponse:
+        """Generate one complete chat response."""
         client = self._get_client()
         params: Dict[str, Any] = {
             "model": kwargs.pop("model", self._model),
@@ -211,6 +216,7 @@ class OpenAILLMService(ILLMService):
         tool_choice: Optional[str] = None,
         **kwargs: Any,
     ) -> AsyncIterator[LLMChunk]:
+        """Stream a generated chat response."""
         client = self._get_client()
         params: Dict[str, Any] = {
             "model": kwargs.pop("model", self._model),
@@ -258,13 +264,16 @@ class OpenAILLMService(ILLMService):
 
     @property
     def model_name(self) -> str:
+        """Return the configured model name."""
         return self._model
 
     @property
     def provider(self) -> str:
+        """Return the provider identifier."""
         return "openai"
 
     async def is_available(self) -> bool:
+        """Return whether the configured provider is available."""
         try:
             client = self._get_client()
             await client.models.list()
@@ -290,6 +299,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
         base_url: Optional[str] = None,
         **client_kwargs: Any,
     ):
+        """Initialize the OpenAIEmbeddingService."""
         self._model = model
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         self._base_url = base_url
@@ -298,6 +308,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
         self._dimension: Optional[int] = None
 
     def _get_client(self):
+        """Create or return the lazily initialized provider client."""
         if self._client is None:
             try:
                 from openai import AsyncOpenAI
@@ -313,6 +324,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
         return self._client
 
     async def embed(self, text: str) -> EmbeddingResponse:
+        """Create an embedding for one text value."""
         client = self._get_client()
         response = await client.embeddings.create(
             model=self._model,
@@ -327,14 +339,13 @@ class OpenAIEmbeddingService(IEmbeddingService):
         )
 
     async def embed_batch(self, texts: List[str]) -> List[EmbeddingResponse]:
+        """Create embeddings for a batch of text values."""
         client = self._get_client()
         response = await client.embeddings.create(
             model=self._model,
             input=texts,
         )
-        tokens_per = (
-            response.usage.total_tokens // len(texts) if response.usage else 0
-        )
+        tokens_per = response.usage.total_tokens // len(texts) if response.usage else 0
         results = []
         for item in response.data:
             self._dimension = len(item.embedding)
@@ -349,6 +360,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
 
     @property
     def dimension(self) -> int:
+        """Return the embedding vector dimension."""
         if self._dimension is None:
             defaults = {
                 "text-embedding-3-small": 1536,
@@ -360,9 +372,11 @@ class OpenAIEmbeddingService(IEmbeddingService):
 
     @property
     def model_name(self) -> str:
+        """Return the configured model name."""
         return self._model
 
     async def is_available(self) -> bool:
+        """Return whether the configured provider is available."""
         try:
             self._get_client()
             return self._api_key is not None

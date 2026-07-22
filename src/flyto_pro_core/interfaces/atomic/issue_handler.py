@@ -4,6 +4,7 @@ Issue Handler - Atomic Module
 Single responsibility: Issue handling utilities
 Stateless: Pure functions
 """
+
 import logging
 from typing import Dict, Any, List, Optional
 
@@ -18,7 +19,7 @@ def create_issue(
     column: Optional[int] = None,
     rule_id: Optional[str] = None,
     suggestion: Optional[str] = None,
-    deduction: float = 0.0
+    deduction: float = 0.0,
 ) -> Dict[str, Any]:
     """
     Create an issue structure
@@ -51,23 +52,17 @@ def create_issue(
                 "column": column,
                 "rule_id": rule_id,
                 "suggestion": suggestion,
-                "deduction": deduction
+                "deduction": deduction,
             },
-            "error": None
+            "error": None,
         }
 
     except Exception as e:
         logger.error(f"Issue creation failed: {e}")
-        return {
-            "ok": False,
-            "issue": {},
-            "error": str(e)
-        }
+        return {"ok": False, "issue": {}, "error": str(e)}
 
 
-def issue_to_dict(
-    issue: Dict[str, Any]
-) -> Dict[str, Any]:
+def issue_to_dict(issue: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert issue to dictionary format
 
@@ -92,23 +87,18 @@ def issue_to_dict(
                 "column": issue.get("column"),
                 "rule_id": issue.get("rule_id"),
                 "suggestion": issue.get("suggestion"),
-                "deduction": issue.get("deduction", 0.0)
+                "deduction": issue.get("deduction", 0.0),
             },
-            "error": None
+            "error": None,
         }
 
     except Exception as e:
         logger.error(f"Issue to dict failed: {e}")
-        return {
-            "ok": False,
-            "dict": {},
-            "error": str(e)
-        }
+        return {"ok": False, "dict": {}, "error": str(e)}
 
 
 def filter_issues_by_severity(
-    issues: List[Dict[str, Any]],
-    severity: str
+    issues: List[Dict[str, Any]], severity: str
 ) -> Dict[str, Any]:
     """
     Filter issues by severity level
@@ -126,28 +116,20 @@ def filter_issues_by_severity(
     """
     try:
         filtered = [
-            issue for issue in issues
+            issue
+            for issue in issues
             if issue.get("severity", "").lower() == severity.lower()
         ]
 
-        return {
-            "ok": True,
-            "issues": filtered,
-            "error": None
-        }
+        return {"ok": True, "issues": filtered, "error": None}
 
     except Exception as e:
         logger.error(f"Issue filtering failed: {e}")
-        return {
-            "ok": False,
-            "issues": [],
-            "error": str(e)
-        }
+        return {"ok": False, "issues": [], "error": str(e)}
 
 
 def filter_issues_by_category(
-    issues: List[Dict[str, Any]],
-    category: str
+    issues: List[Dict[str, Any]], category: str
 ) -> Dict[str, Any]:
     """
     Filter issues by category
@@ -165,28 +147,19 @@ def filter_issues_by_category(
     """
     try:
         filtered = [
-            issue for issue in issues
+            issue
+            for issue in issues
             if issue.get("category", "").lower() == category.lower()
         ]
 
-        return {
-            "ok": True,
-            "issues": filtered,
-            "error": None
-        }
+        return {"ok": True, "issues": filtered, "error": None}
 
     except Exception as e:
         logger.error(f"Issue filtering failed: {e}")
-        return {
-            "ok": False,
-            "issues": [],
-            "error": str(e)
-        }
+        return {"ok": False, "issues": [], "error": str(e)}
 
 
-def get_total_deduction(
-    issues: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+def get_total_deduction(issues: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Calculate total score deduction from issues
 
@@ -203,16 +176,8 @@ def get_total_deduction(
     try:
         total = sum(issue.get("deduction", 0.0) for issue in issues)
 
-        return {
-            "ok": True,
-            "total_deduction": total,
-            "error": None
-        }
+        return {"ok": True, "total_deduction": total, "error": None}
 
     except Exception as e:
         logger.error(f"Deduction calculation failed: {e}")
-        return {
-            "ok": False,
-            "total_deduction": 0.0,
-            "error": str(e)
-        }
+        return {"ok": False, "total_deduction": 0.0, "error": str(e)}

@@ -93,6 +93,7 @@ class ValidationIssue:
     suggestion: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "severity": self.severity.value,
             "type": self.type.value,
@@ -120,6 +121,7 @@ class EdgeDiagnostic:
     edge_type: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "edge_id": self.edge_id,
             "from_node": self.from_node,
@@ -160,6 +162,7 @@ class ValidationReport:
         return len(self.warnings) > 0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "is_valid": self.is_valid,
             "errors": [e.to_dict() for e in self.errors],
@@ -180,6 +183,7 @@ class WorkflowValidator:
     """
 
     def __init__(self, registry: Optional[ContractRegistry] = None):
+        """Initialize the WorkflowValidator."""
         self.registry = registry or ContractRegistry.instance()
 
     async def validate(self, spec: WorkflowSpec) -> ValidationReport:
@@ -209,18 +213,22 @@ class WorkflowValidator:
 
         # 3. Validate all edges
         for edge in spec.edges:
-            diagnostic = await self._validate_edge(edge, spec, node_contracts, errors, warnings)
+            diagnostic = await self._validate_edge(
+                edge, spec, node_contracts, errors, warnings
+            )
             edge_diagnostics.append(diagnostic)
 
         # 4. Check for cycles
         try:
             execution_order = spec.topological_sort()
         except ValueError as e:
-            errors.append(ValidationIssue(
-                severity=IssueSeverity.ERROR,
-                type=IssueType.CYCLE_DETECTED,
-                message=str(e),
-            ))
+            errors.append(
+                ValidationIssue(
+                    severity=IssueSeverity.ERROR,
+                    type=IssueType.CYCLE_DETECTED,
+                    message=str(e),
+                )
+            )
             execution_order = []
 
         # 5. Validate entry nodes
@@ -254,23 +262,27 @@ class WorkflowValidator:
         node_ids: Set[str] = set()
         for node in spec.nodes:
             if node.id in node_ids:
-                errors.append(ValidationIssue(
-                    severity=IssueSeverity.ERROR,
-                    type=IssueType.DUPLICATE_ID,
-                    message=f"Duplicate node ID: {node.id}",
-                    node_id=node.id,
-                ))
+                errors.append(
+                    ValidationIssue(
+                        severity=IssueSeverity.ERROR,
+                        type=IssueType.DUPLICATE_ID,
+                        message=f"Duplicate node ID: {node.id}",
+                        node_id=node.id,
+                    )
+                )
             node_ids.add(node.id)
 
         edge_ids: Set[str] = set()
         for edge in spec.edges:
             if edge.id and edge.id in edge_ids:
-                errors.append(ValidationIssue(
-                    severity=IssueSeverity.ERROR,
-                    type=IssueType.DUPLICATE_ID,
-                    message=f"Duplicate edge ID: {edge.id}",
-                    edge_id=edge.id,
-                ))
+                errors.append(
+                    ValidationIssue(
+                        severity=IssueSeverity.ERROR,
+                        type=IssueType.DUPLICATE_ID,
+                        message=f"Duplicate edge ID: {edge.id}",
+                        edge_id=edge.id,
+                    )
+                )
             if edge.id:
                 edge_ids.add(edge.id)
 
@@ -285,24 +297,32 @@ class WorkflowValidator:
         # Check module exists
         contract = self.registry.get(node.module_id)
         if not contract:
-            errors.append(ValidationIssue(
-                severity=IssueSeverity.ERROR,
-                type=IssueType.MODULE_NOT_FOUND,
-                message=f"Module not found: {node.module_id}",
-                node_id=node.id,
-            ))
+            errors.append(
+                ValidationIssue(
+                    severity=IssueSeverity.ERROR,
+                    type=IssueType.MODULE_NOT_FOUND,
+                    message=f"Module not found: {node.module_id}",
+                    node_id=node.id,
+                )
+            )
             return None
 
         # Check deprecation
         if contract.deprecated:
-            replacement = f" Use {contract.deprecated_by} instead." if contract.deprecated_by else ""
-            warnings.append(ValidationIssue(
-                severity=IssueSeverity.WARNING,
-                type=IssueType.MODULE_DEPRECATED,
-                message=f"Module {node.module_id} is deprecated.{replacement}",
-                node_id=node.id,
-                suggestion=contract.deprecated_by,
-            ))
+            replacement = (
+                f" Use {contract.deprecated_by} instead."
+                if contract.deprecated_by
+                else ""
+            )
+            warnings.append(
+                ValidationIssue(
+                    severity=IssueSeverity.WARNING,
+                    type=IssueType.MODULE_DEPRECATED,
+                    message=f"Module {node.module_id} is deprecated.{replacement}",
+                    node_id=node.id,
+                    suggestion=contract.deprecated_by,
+                )
+            )
 
         # Check version compatibility
         if node.version_required:
@@ -310,34 +330,40 @@ class WorkflowValidator:
                 node.module_id, node.version_required
             )
             if not compatible:
-                errors.append(ValidationIssue(
-                    severity=IssueSeverity.ERROR,
-                    type=IssueType.MODULE_VERSION_MISMATCH,
-                    message=reason or f"Version mismatch for {node.module_id}",
-                    node_id=node.id,
-                ))
+                errors.append(
+                    ValidationIssue(
+                        severity=IssueSeverity.ERROR,
+                        type=IssueType.MODULE_VERSION_MISMATCH,
+                        message=reason or f"Version mismatch for {node.module_id}",
+                        node_id=node.id,
+                    )
+                )
 
         # Validate parameters
         if contract.params_schema:
             is_valid, param_errors = contract.params_schema.validate(node.params)
             if not is_valid:
                 for param_name, error_msg in param_errors.items():
-                    errors.append(ValidationIssue(
-                        severity=IssueSeverity.ERROR,
-                        type=IssueType.PARAM_VALIDATION_FAILED,
-                        message=f"Parameter '{param_name}': {error_msg}",
-                        node_id=node.id,
-                        param_name=param_name,
-                    ))
+                    errors.append(
+                        ValidationIssue(
+                            severity=IssueSeverity.ERROR,
+                            type=IssueType.PARAM_VALIDATION_FAILED,
+                            message=f"Parameter '{param_name}': {error_msg}",
+                            node_id=node.id,
+                            param_name=param_name,
+                        )
+                    )
 
         # Info: node is disabled
         if node.disabled:
-            info.append(ValidationIssue(
-                severity=IssueSeverity.INFO,
-                type=IssueType.CUSTOM,
-                message=f"Node {node.id} is disabled",
-                node_id=node.id,
-            ))
+            info.append(
+                ValidationIssue(
+                    severity=IssueSeverity.INFO,
+                    type=IssueType.CUSTOM,
+                    message=f"Node {node.id} is disabled",
+                    node_id=node.id,
+                )
+            )
 
         return contract
 
@@ -518,28 +544,34 @@ class WorkflowValidator:
             # Validate specified entry nodes exist
             for entry_id in spec.entry_nodes:
                 if not spec.get_node(entry_id):
-                    errors.append(ValidationIssue(
-                        severity=IssueSeverity.ERROR,
-                        type=IssueType.NO_ENTRY_NODE,
-                        message=f"Specified entry node '{entry_id}' not found",
-                    ))
+                    errors.append(
+                        ValidationIssue(
+                            severity=IssueSeverity.ERROR,
+                            type=IssueType.NO_ENTRY_NODE,
+                            message=f"Specified entry node '{entry_id}' not found",
+                        )
+                    )
             return spec.entry_nodes
 
         # Use auto-detected entry nodes
         if not auto_entry:
-            errors.append(ValidationIssue(
-                severity=IssueSeverity.ERROR,
-                type=IssueType.NO_ENTRY_NODE,
-                message="No entry nodes found (all nodes have incoming edges)",
-            ))
+            errors.append(
+                ValidationIssue(
+                    severity=IssueSeverity.ERROR,
+                    type=IssueType.NO_ENTRY_NODE,
+                    message="No entry nodes found (all nodes have incoming edges)",
+                )
+            )
             return []
 
         if len(auto_entry) > 1:
-            warnings.append(ValidationIssue(
-                severity=IssueSeverity.WARNING,
-                type=IssueType.CUSTOM,
-                message=f"Multiple entry nodes detected: {auto_entry}",
-            ))
+            warnings.append(
+                ValidationIssue(
+                    severity=IssueSeverity.WARNING,
+                    type=IssueType.CUSTOM,
+                    message=f"Multiple entry nodes detected: {auto_entry}",
+                )
+            )
 
         return auto_entry
 
@@ -557,12 +589,14 @@ class WorkflowValidator:
 
         for node in spec.nodes:
             if node.id not in connected_nodes and not node.disabled:
-                warnings.append(ValidationIssue(
-                    severity=IssueSeverity.WARNING,
-                    type=IssueType.ORPHAN_NODE,
-                    message=f"Node '{node.id}' has no connections",
-                    node_id=node.id,
-                ))
+                warnings.append(
+                    ValidationIssue(
+                        severity=IssueSeverity.WARNING,
+                        type=IssueType.ORPHAN_NODE,
+                        message=f"Node '{node.id}' has no connections",
+                        node_id=node.id,
+                    )
+                )
 
     def _check_connection_limits(
         self,
@@ -591,15 +625,17 @@ class WorkflowValidator:
             if contract:
                 port = contract.get_port(port_id)
                 if port and port.max_connections > 0 and count > port.max_connections:
-                    errors.append(ValidationIssue(
-                        severity=IssueSeverity.ERROR,
-                        type=IssueType.PORT_MAX_CONNECTIONS,
-                        message=(
-                            f"Port '{port_id}' on node '{node_id}' has {count} connections "
-                            f"but only allows {port.max_connections}"
-                        ),
-                        node_id=node_id,
-                    ))
+                    errors.append(
+                        ValidationIssue(
+                            severity=IssueSeverity.ERROR,
+                            type=IssueType.PORT_MAX_CONNECTIONS,
+                            message=(
+                                f"Port '{port_id}' on node '{node_id}' has {count} connections "
+                                f"but only allows {port.max_connections}"
+                            ),
+                            node_id=node_id,
+                        )
+                    )
 
     async def validate_edge(
         self,

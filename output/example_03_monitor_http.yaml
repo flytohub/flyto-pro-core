@@ -1,0 +1,45 @@
+name: Health check a website
+version: 1.0.0
+steps:
+- id: node_9851203313870
+  module: flow.start
+  label: Start
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_9851203313871_0_b51997
+  module: http.get
+  label: Check HTTP health
+  params:
+    url: '{{url}}'
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+edges:
+- id: e_node_9851203313870_node_9851203313871_0_b51997
+  source: node_9851203313870
+  target: node_9851203313871_0_b51997
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+description: Health check a website
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: Url
+          id: url
+          type: text
+          props: {}
+      - components: []

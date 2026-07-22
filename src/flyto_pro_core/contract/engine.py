@@ -60,6 +60,7 @@ class ContractEngine:
     _instance: Optional[ContractEngine] = None
 
     def __init__(self):
+        """Initialize the ContractEngine."""
         self.registry = ContractRegistry()
         self.validator: Optional[WorkflowValidator] = None
         self.binder: Optional[BindingResolver] = None
@@ -76,6 +77,7 @@ class ContractEngine:
         # Try DI container first
         try:
             from flyto_pro_core.core.container import container
+
             if container.has("contract_engine"):
                 return container.get("contract_engine")
         except ImportError:
@@ -92,6 +94,7 @@ class ContractEngine:
         cls._instance = None
         try:
             from flyto_pro_core.core.container import container
+
             container.reset("contract_engine")
         except ImportError:
             pass
@@ -120,7 +123,9 @@ class ContractEngine:
     def _ensure_initialized(self) -> None:
         """Ensure engine is initialized."""
         if not self._initialized:
-            raise RuntimeError("ContractEngine not initialized. Call initialize() first.")
+            raise RuntimeError(
+                "ContractEngine not initialized. Call initialize() first."
+            )
 
     # =========================================================================
     # API 1: validate_workflow(spec) -> ValidationReport

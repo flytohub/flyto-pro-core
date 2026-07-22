@@ -1,0 +1,55 @@
+name: Resize an image
+version: 1.0.0
+steps:
+- id: node_31355689876696
+  module: flow.start
+  label: Start
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_31355689876697_0_874ecc
+  module: image.resize
+  label: Resize image
+  params:
+    input: '{{input}}'
+    width: '{{width}}'
+    height: '{{height}}'
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+edges:
+- id: e_node_31355689876696_node_31355689876697_0_874ecc
+  source: node_31355689876696
+  target: node_31355689876697_0_874ecc
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+description: Resize an image
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: Input
+          id: input
+          type: text
+          props: {}
+        - label: Height
+          id: height
+          type: text
+          props: {}
+      - components:
+        - label: Width
+          id: width
+          type: text
+          props: {}

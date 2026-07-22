@@ -69,6 +69,7 @@ class TaskAPI:
     """
 
     def __init__(self, state_manager=None):
+        """Initialize the TaskAPI."""
         self._state_manager = state_manager
         self._goals: Dict[str, Goal] = {}
 

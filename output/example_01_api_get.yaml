@@ -1,0 +1,45 @@
+name: HTTP GET request
+version: 1.0.0
+steps:
+- id: node_270353520140194
+  module: flow.start
+  label: Start
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: node_270353520140195_0_0d3bf2
+  module: http.get
+  label: Send GET request
+  params:
+    url: '{{url}}'
+  positionX: 400
+  positionY: 150
+  orderIndex: 1
+edges:
+- id: e_node_270353520140194_node_270353520140195_0_0d3bf2
+  source: node_270353520140194
+  target: node_270353520140195_0_0d3bf2
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+description: HTTP GET request
+_ui:
+  builder:
+    sections:
+    - id: section_1
+      gap: 16px
+      columns: 2
+      grid:
+      - 6
+      - 6
+      columnsData:
+      - components:
+        - label: Url
+          id: url
+          type: text
+          props: {}
+      - components: []

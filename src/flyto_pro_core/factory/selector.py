@@ -15,7 +15,7 @@ from .models import RecipeResult
 
 # Connectors that separate intents in a description
 _SPLIT_PATTERN = re.compile(
-    r'\b(?:and|then|after that|next|finally|,|→|->|=>|；|，|然後|接著|再|並)\b',
+    r"\b(?:and|then|after that|next|finally|,|→|->|=>|；|，|然後|接著|再|並)\b",
     re.IGNORECASE,
 )
 
@@ -25,6 +25,25 @@ _LIST_PRODUCER_MODULES = {"string.split", "array.filter", "array.map", "data.csv
 
 # Blueprints that are iteration wrappers
 _ITERATION_BPS = {"foreach_loop"}
+
+_QUERY_STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "for",
+    "from",
+    "in",
+    "it",
+    "of",
+    "on",
+    "the",
+    "then",
+    "to",
+    "with",
+    "each",
+    "that",
+    "this",
+}
 
 
 def select_blueprints(
@@ -42,12 +61,6 @@ def select_blueprints(
     if not phrases:
         phrases = [description]
 
-    desc_lower = description.lower()
-    wants_browser = any(
-        kw in desc_lower
-        for kw in ("browser", "scrape", "website", "webpage", "click", "login", "screenshot", "網頁", "爬")
-    )
-
     # For each phrase, collect top N candidates (not just top 1)
     phrase_candidates: List[List[str]] = []
 
@@ -55,13 +68,16 @@ def select_blueprints(
         phrase = phrase.strip()
         if len(phrase) < 3:
             continue
-        results = blueprint_engine.search(phrase)
+        wants_browser = _requests_browser(phrase)
+        results = _rank_direct_matches(phrase, blueprint_engine.search(phrase))
         candidates = []
         for r in results:
             bp_id = r["id"]
             if bp_id in _ITERATION_BPS:
                 continue
-            if not wants_browser and _is_browser_blueprint(bp_id, blueprint_engine._blueprints):
+            if not wants_browser and _is_browser_blueprint(
+                bp_id, blueprint_engine._blueprints
+            ):
                 continue
             if _has_dynamic_module(bp_id, blueprint_engine._blueprints):
                 continue
@@ -73,10 +89,16 @@ def select_blueprints(
 
     if not phrase_candidates:
         # Fallback: search full description
-        results = blueprint_engine.search(description)
+        wants_browser = _requests_browser(description)
+        results = _rank_direct_matches(
+            description,
+            blueprint_engine.search(description),
+        )
         for r in results:
             bp_id = r["id"]
-            skip = (not wants_browser and _is_browser_blueprint(bp_id, blueprint_engine._blueprints))
+            skip = not wants_browser and _is_browser_blueprint(
+                bp_id, blueprint_engine._blueprints
+            )
             skip = skip or _has_dynamic_module(bp_id, blueprint_engine._blueprints)
             if not skip:
                 return RecipeResult(ok=True, blueprints=[bp_id], args={})
@@ -98,6 +120,77 @@ def select_blueprints(
         selected = _insert_foreach(selected, blueprint_engine._blueprints)
 
     return RecipeResult(ok=True, blueprints=selected, args={})
+
+
+def _requests_browser(text: str) -> bool:
+    """Return whether one intent explicitly requests browser behavior."""
+    lowered = text.lower()
+    return any(
+        keyword in lowered
+        for keyword in (
+            "browser",
+            "scrape",
+            "website",
+            "webpage",
+            "click",
+            "login",
+            "screenshot",
+            "網頁",
+            "爬",
+        )
+    )
+
+
+def _rank_direct_matches(
+    phrase: str, results: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Keep and rank results that match words from the original request.
+
+    Blueprint search may expand synonyms. That is useful for recall, but a
+    synonym-only result can be unrelated to a specific unsupported request.
+    This second pass requires at least one original, non-stop-word match and
+    favors concise IDs, names, and tags over incidental description matches.
+    """
+    words = {
+        word
+        for word in re.findall(r"[\w-]+", phrase.lower())
+        if len(word) > 1 and word not in _QUERY_STOP_WORDS
+    }
+    if not words:
+        return results
+
+    ranked = []
+    for index, result in enumerate(results):
+        identifier = result.get("id", "").lower().replace("_", " ")
+        name = result.get("name", "").lower()
+        tags = {str(tag).lower() for tag in result.get("tags", [])}
+        description = result.get("description", "").lower()
+
+        score = 0
+        matched = 0
+        for word in words:
+            if word in tags:
+                score += 6
+                matched += 1
+            elif word in identifier.split():
+                score += 5
+                matched += 1
+            elif word in name.split():
+                score += 4
+                matched += 1
+            elif word in name or word in identifier:
+                score += 2
+                matched += 1
+            elif word in description:
+                score += 1
+                matched += 1
+
+        if matched:
+            coverage = matched / len(words)
+            ranked.append((coverage, score, -index, result))
+
+    ranked.sort(reverse=True, key=lambda item: item[:3])
+    return [item[3] for item in ranked]
 
 
 def _split_intents(description: str) -> List[str]:
@@ -130,7 +223,13 @@ def _order_by_dependency(
     return producers + consumers
 
 
-_BROWSER_MODULES = {"browser.launch", "browser.goto", "browser.click", "browser.type", "browser.screenshot"}
+_BROWSER_MODULES = {
+    "browser.launch",
+    "browser.goto",
+    "browser.click",
+    "browser.type",
+    "browser.screenshot",
+}
 _BROWSER_ID_PREFIXES = ("browser_", "scrape_")
 
 

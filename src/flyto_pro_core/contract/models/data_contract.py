@@ -143,7 +143,10 @@ class DataContract:
                 return False, f"Value must be >= {self.constraints['min']}"
             if isinstance(value, str) and len(value) < self.constraints["min"]:
                 return False, f"Length must be >= {self.constraints['min']}"
-            if isinstance(value, (list, tuple)) and len(value) < self.constraints["min"]:
+            if (
+                isinstance(value, (list, tuple))
+                and len(value) < self.constraints["min"]
+            ):
                 return False, f"Length must be >= {self.constraints['min']}"
 
         if "max" in self.constraints:
@@ -151,7 +154,10 @@ class DataContract:
                 return False, f"Value must be <= {self.constraints['max']}"
             if isinstance(value, str) and len(value) > self.constraints["max"]:
                 return False, f"Length must be <= {self.constraints['max']}"
-            if isinstance(value, (list, tuple)) and len(value) > self.constraints["max"]:
+            if (
+                isinstance(value, (list, tuple))
+                and len(value) > self.constraints["max"]
+            ):
                 return False, f"Length must be <= {self.constraints['max']}"
 
         if "pattern" in self.constraints and isinstance(value, str):
@@ -275,14 +281,17 @@ class ContractTemplates:
 
     @staticmethod
     def string_array() -> DataContract:
+        """Return a reusable string-array data contract."""
         return DataContract(data_type=DataType.ARRAY, item_type=DataType.STRING)
 
     @staticmethod
     def number_array() -> DataContract:
+        """Return a reusable number-array data contract."""
         return DataContract(data_type=DataType.ARRAY, item_type=DataType.NUMBER)
 
     @staticmethod
     def url() -> DataContract:
+        """Return a reusable URL data contract."""
         return DataContract(
             data_type=DataType.STRING,
             constraints={"pattern": r"^https?://"},
@@ -291,6 +300,7 @@ class ContractTemplates:
 
     @staticmethod
     def csv_data() -> DataContract:
+        """Return a reusable CSV-data contract."""
         return DataContract(
             data_type=DataType.OBJECT,
             shape="object{rows:array<object>, headers:array<string>}",
@@ -298,8 +308,10 @@ class ContractTemplates:
 
     @staticmethod
     def file_path() -> DataContract:
+        """Return a reusable file-path data contract."""
         return DataContract(data_type=DataType.FILE)
 
     @staticmethod
     def element_ref() -> DataContract:
+        """Return a reusable browser-element reference contract."""
         return DataContract(data_type=DataType.ELEMENT)

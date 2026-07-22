@@ -15,10 +15,9 @@ Target format reference (from real template):
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
-import time
-import random
-import string
 from typing import Any, Dict, List, Optional, Set
 
 _LOOP_MODULES = {"flow.foreach", "flow.while", "flow.repeat"}
@@ -31,30 +30,41 @@ def enrich_template(
     description: str = "",
     module_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
+    """Build a canvas-ready workflow template from deterministic steps and edges."""
     module_schemas = module_schemas or {}
-    ts = int(time.time() * 1000)
-    suffix_chars = string.ascii_lowercase + string.digits
+    identity = json.dumps(
+        {"name": name, "description": description, "steps": steps, "edges": edges},
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    base_id = int(digest[:12], 16)
 
     # --- 1. Generate new node IDs ---
     id_map: Dict[str, str] = {}
     for idx, step in enumerate(steps):
-        suffix = "".join(random.choices(suffix_chars, k=6))
-        id_map[step["id"]] = f"node_{ts + idx + 1}_{idx}_{suffix}"
+        suffix = hashlib.sha256(
+            f"{identity}:{idx}:{step['id']}".encode("utf-8")
+        ).hexdigest()[:6]
+        id_map[step["id"]] = f"node_{base_id + idx + 1}_{idx}_{suffix}"
 
     # --- 2. Build enriched steps ---
     enriched_steps: List[Dict[str, Any]] = []
 
     # flow.start
-    start_id = f"node_{ts}"
-    enriched_steps.append({
-        "id": start_id,
-        "module": "flow.start",
-        "label": start_id,
-        "params": {},
-        "positionX": 100,
-        "positionY": 150,
-        "orderIndex": 0,
-    })
+    start_id = f"node_{base_id}"
+    enriched_steps.append(
+        {
+            "id": start_id,
+            "module": "flow.start",
+            "label": "Start",
+            "params": {},
+            "positionX": 100,
+            "positionY": 150,
+            "orderIndex": 0,
+        }
+    )
 
     # Detect which steps are foreach body (next step after a foreach node)
     foreach_body_map: Dict[str, str] = {}  # foreach_new_id → body_new_id
@@ -113,14 +123,22 @@ def enrich_template(
             pos_y = 150
         else:
             # Body nodes: same X as parent foreach, Y + 250
-            parent_step = next((s for s in enriched_steps if s["id"] in foreach_body_map and foreach_body_map[s["id"]] == new_id), None)
+            parent_step = next(
+                (
+                    s
+                    for s in enriched_steps
+                    if s["id"] in foreach_body_map
+                    and foreach_body_map[s["id"]] == new_id
+                ),
+                None,
+            )
             pos_x = parent_step["positionX"] if parent_step else 700
             pos_y = (parent_step["positionY"] if parent_step else 150) + 250
 
         enriched_step: Dict[str, Any] = {
             "id": new_id,
             "module": module_id,
-            "label": new_id,
+            "label": step.get("label") or module_id,
             "params": params,
             "positionX": pos_x,
             "positionY": pos_y,
@@ -136,7 +154,13 @@ def enrich_template(
         enriched_steps.append(enriched_step)
 
     # --- 3. Generate edges ---
-    enriched_edges = _generate_edges(enriched_steps, body_ids, foreach_body_map)
+    enriched_edges = _generate_edges(
+        enriched_steps,
+        body_ids,
+        foreach_body_map,
+        source_edges=edges,
+        id_map=id_map,
+    )
 
     # --- 4. Build _ui.builder ---
     ui = _build_ui(steps, module_schemas)
@@ -147,6 +171,8 @@ def enrich_template(
         "steps": enriched_steps,
         "edges": enriched_edges,
     }
+    if description:
+        template["description"] = description
     if ui:
         template["_ui"] = ui
 
@@ -155,7 +181,9 @@ def enrich_template(
 
 # --- Reference conversion ---
 
-_STEP_DATA_REF = re.compile(r"\$\{(\w+)\.data\.(\w+)\}")  # ${step_id.data.field} → ${steps.NEW_ID.field}
+_STEP_DATA_REF = re.compile(
+    r"\$\{(\w+)\.data\.(\w+)\}"
+)  # ${step_id.data.field} → ${steps.NEW_ID.field}
 _STEP_REF = re.compile(r"\$\{(\w+)\.(\w+)\}")  # ${step_id.field}
 _PARAM_REF = re.compile(r"\$\{params\.(\w+)\}")  # ${params.X} → {{X}}
 
@@ -167,18 +195,22 @@ def _convert_ref(val: str, id_map: Dict[str, str]) -> str:
 
     # ${step_id.data.field} → ${steps.NEW_ID.field}
     def _sub_data(m):
+        """Rewrite a data reference for canvas consumption."""
         old_id, field = m.group(1), m.group(2)
         new_id = id_map.get(old_id, old_id)
         return f"${{steps.{new_id}.{field}}}"
+
     val = _STEP_DATA_REF.sub(_sub_data, val)
 
     # ${step_id.field} (without .data.) → ${steps.NEW_ID.field}
     def _sub_plain(m):
+        """Rewrite a plain step reference for canvas consumption."""
         old_id, field = m.group(1), m.group(2)
         if old_id in ("steps", "params", "env", "loop", "item"):
             return m.group(0)  # Don't touch these
         new_id = id_map.get(old_id, old_id)
         return f"${{steps.{new_id}.{field}}}"
+
     val = _STEP_REF.sub(_sub_plain, val)
 
     return val
@@ -186,49 +218,71 @@ def _convert_ref(val: str, id_map: Dict[str, str]) -> str:
 
 # --- Edge generation ---
 
+
 def _generate_edges(
     steps: List[Dict[str, Any]],
     body_ids: Set[str],
     foreach_body_map: Dict[str, str],
+    source_edges: Optional[List[Dict[str, Any]]] = None,
+    id_map: Optional[Dict[str, str]] = None,
 ) -> List[Dict[str, Any]]:
+    """Generate deterministic canvas edges between workflow steps."""
     edges: List[Dict[str, Any]] = []
+    source_edges = source_edges or []
+    id_map = id_map or {}
 
     # Main flow (excluding body nodes)
     main_ids = [s["id"] for s in steps if s["id"] not in body_ids]
+    explicit_pairs = []
+    for edge in source_edges:
+        source = id_map.get(edge.get("source", ""), edge.get("source", ""))
+        target = id_map.get(edge.get("target", ""), edge.get("target", ""))
+        if source and target and source != target:
+            explicit_pairs.append((source, target))
 
-    for i in range(len(main_ids) - 1):
-        src, tgt = main_ids[i], main_ids[i + 1]
-        _src_step = next((s for s in steps if s["id"] == src), {})
+    if explicit_pairs:
+        first_targeted = {target for _, target in explicit_pairs}
+        roots = [node_id for node_id in main_ids[1:] if node_id not in first_targeted]
+        if roots:
+            explicit_pairs.insert(0, (main_ids[0], roots[0]))
+    else:
+        explicit_pairs = list(zip(main_ids, main_ids[1:]))
 
-        # Skip foreach nodes (they use connections.iterate, not sequential to body)
-        if src in foreach_body_map:
+    seen_pairs = set()
+    for src, tgt in explicit_pairs:
+        if (src, tgt) in seen_pairs:
             continue
-
-        tgt_step = next((s for s in steps if s["id"] == tgt), {})
-        tgt_handle = "in" if tgt_step.get("module") in _LOOP_MODULES else "target"
-
-        edges.append({
-            "id": f"e_{src}_{tgt}",
-            "source": src,
-            "target": tgt,
-            "sourceHandle": "output",
-            "targetHandle": tgt_handle,
-            "type": "glow",
-            "data": {"edgeType": "sequential", "pathType": "bezier"},
-        })
+        seen_pairs.add((src, tgt))
+        if src in foreach_body_map and foreach_body_map[src] == tgt:
+            continue
+        tgt_step = next((step for step in steps if step["id"] == tgt), {})
+        target_handle = "in" if tgt_step.get("module") in _LOOP_MODULES else "target"
+        edges.append(
+            {
+                "id": f"e_{src}_{tgt}",
+                "source": src,
+                "target": tgt,
+                "sourceHandle": "output",
+                "targetHandle": target_handle,
+                "type": "glow",
+                "data": {"edgeType": "sequential", "pathType": "bezier"},
+            }
+        )
 
     # Iterate edges
     for foreach_id, body_id in foreach_body_map.items():
-        edges.append({
-            "id": f"loop_iterate_{foreach_id}_{body_id}",
-            "source": foreach_id,
-            "target": body_id,
-            "sourceHandle": "body_out",
-            "targetHandle": "target-top",
-            "type": "glow",
-            "data": {"edgeType": "iterate", "pathType": "smoothstep"},
-            "label": "Iterate",
-        })
+        edges.append(
+            {
+                "id": f"loop_iterate_{foreach_id}_{body_id}",
+                "source": foreach_id,
+                "target": body_id,
+                "sourceHandle": "body_out",
+                "targetHandle": "target-top",
+                "type": "glow",
+                "data": {"edgeType": "iterate", "pathType": "smoothstep"},
+                "label": "Iterate",
+            }
+        )
 
     return edges
 
@@ -236,8 +290,18 @@ def _generate_edges(
 # --- UI Builder ---
 
 _TEXTAREA_NAMES = {
-    "text", "content", "body", "prompt", "message", "template",
-    "script", "code", "query", "items", "data", "description",
+    "text",
+    "content",
+    "body",
+    "prompt",
+    "message",
+    "template",
+    "script",
+    "code",
+    "query",
+    "items",
+    "data",
+    "description",
 }
 
 
@@ -284,29 +348,33 @@ def _build_ui(
     sec_idx = 0
     for comp in large:
         sec_idx += 1
-        sections.append({
-            "id": f"section_{sec_idx}",
-            "gap": "16px",
-            "columns": 1,
-            "grid": [12],
-            "columnsData": [{"components": [comp]}],
-        })
+        sections.append(
+            {
+                "id": f"section_{sec_idx}",
+                "gap": "16px",
+                "columns": 1,
+                "grid": [12],
+                "columnsData": [{"components": [comp]}],
+            }
+        )
 
     if small:
         left, right = [], []
         for i, comp in enumerate(small):
             (left if i % 2 == 0 else right).append(comp)
         sec_idx += 1
-        sections.append({
-            "id": f"section_{sec_idx}",
-            "gap": "16px",
-            "columns": 2,
-            "grid": [6, 6],
-            "columnsData": [
-                {"components": left},
-                {"components": right},
-            ],
-        })
+        sections.append(
+            {
+                "id": f"section_{sec_idx}",
+                "gap": "16px",
+                "columns": 2,
+                "grid": [6, 6],
+                "columnsData": [
+                    {"components": left},
+                    {"components": right},
+                ],
+            }
+        )
 
     return {"builder": {"sections": sections}}
 

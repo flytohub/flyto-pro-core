@@ -32,6 +32,7 @@ class EnvironmentFingerprint:
     external_deps: Dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Normalize EnvironmentFingerprint fields after initialization."""
         if not self.os:
             self.os = f"{platform.system()}-{platform.release()}"
 

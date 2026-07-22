@@ -35,6 +35,7 @@ class MatchResult:
     alternatives: List[FixPattern] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "found": self.found,
             "pattern_id": self.pattern.pattern_id if self.pattern else None,
@@ -60,6 +61,7 @@ class EMSMatcher:
         similarity_threshold: float = 0.8,
         max_alternatives: int = 3,
     ):
+        """Initialize the EMSMatcher."""
         self.similarity_threshold = similarity_threshold
         self.max_alternatives = max_alternatives
 
@@ -88,7 +90,8 @@ class EMSMatcher:
 
         # Filter to active/testing patterns only
         active_patterns = [
-            p for p in patterns
+            p
+            for p in patterns
             if p.status in (FixPatternStatus.ACTIVE, FixPatternStatus.TESTING)
         ]
 
@@ -102,9 +105,7 @@ class EMSMatcher:
         scored: List[Tuple[FixPattern, float, str]] = []
 
         for pattern in active_patterns:
-            score, reason = self._calculate_similarity(
-                signature, pattern, context
-            )
+            score, reason = self._calculate_similarity(signature, pattern, context)
             if score >= self.similarity_threshold:
                 scored.append((pattern, score, reason))
 
@@ -121,7 +122,7 @@ class EMSMatcher:
         )
 
         best = scored[0]
-        alternatives = [p for p, _, _ in scored[1:self.max_alternatives + 1]]
+        alternatives = [p for p, _, _ in scored[1 : self.max_alternatives + 1]]
 
         return MatchResult(
             found=True,
@@ -185,7 +186,8 @@ class EMSMatcher:
         # Context matching (if available)
         if context and pattern.additional_conditions:
             condition_matches = sum(
-                1 for c in pattern.additional_conditions
+                1
+                for c in pattern.additional_conditions
                 if self._evaluate_condition(c, context)
             )
             if condition_matches > 0:
@@ -224,6 +226,7 @@ class EMSStore:
         project_id: Optional[str] = None,
         environment: Optional[str] = None,
     ):
+        """Initialize the EMSStore."""
         self.storage_path = storage_path
         self.project_id = project_id
         self.environment = environment
@@ -347,8 +350,7 @@ class EMSStore:
 
         if pattern.scope == FixPatternScope.ENVIRONMENT:
             return (
-                pattern.environment == self.environment
-                or pattern.environment is None
+                pattern.environment == self.environment or pattern.environment is None
             )
 
         if pattern.scope == FixPatternScope.MODULE:
@@ -459,9 +461,7 @@ class EMSStore:
             "total_applications": total_applications,
             "total_successes": total_successes,
             "overall_success_rate": (
-                total_successes / total_applications
-                if total_applications > 0
-                else 0
+                total_successes / total_applications if total_applications > 0 else 0
             ),
         }
 

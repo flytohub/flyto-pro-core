@@ -278,7 +278,9 @@ class PlanContract:
             if not assertion.assertion_type:
                 errors.append(f"Assertion {i} missing assertion_type")
             if assertion.level == AssertionLevel.SOFT and assertion.threshold is None:
-                errors.append(f"Soft assertion {assertion.assertion_id} missing threshold")
+                errors.append(
+                    f"Soft assertion {assertion.assertion_id} missing threshold"
+                )
 
         return errors
 
@@ -334,7 +336,13 @@ PLAN_CONTRACT_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "observation_type": {
-                        "enum": ["browser", "database", "filesystem", "network", "runtime"]
+                        "enum": [
+                            "browser",
+                            "database",
+                            "filesystem",
+                            "network",
+                            "runtime",
+                        ]
                     },
                     "targets": {"type": "array", "items": {"type": "string"}},
                     "capture_mode": {"enum": ["snapshot", "diff", "stream"]},

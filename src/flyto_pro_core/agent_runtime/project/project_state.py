@@ -46,10 +46,12 @@ class ProjectConfig:
     updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
     def __post_init__(self):
+        """Normalize ProjectConfig fields after initialization."""
         if not self.project_id:
             self.project_id = str(uuid.uuid4())[:12]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "project_id": self.project_id,
             "project_name": self.project_name,
@@ -68,6 +70,7 @@ class ProjectConfig:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ProjectConfig":
+        """Create an instance from a dictionary."""
         return cls(
             project_id=data.get("project_id", ""),
             project_name=data.get("project_name", ""),
@@ -127,6 +130,7 @@ class ProjectState:
     last_verification_id: Optional[str] = None
 
     def __post_init__(self):
+        """Normalize ProjectState fields after initialization."""
         if not self.session_id:
             self.session_id = str(uuid.uuid4())[:8]
             self.session_started_at = datetime.utcnow().isoformat()
@@ -188,6 +192,7 @@ class ProjectState:
         }
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "meta": self.meta.to_dict(),
             "config": self.config.to_dict(),
@@ -206,6 +211,7 @@ class ProjectState:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ProjectState":
+        """Create an instance from a dictionary."""
         return cls(
             meta=ContractMeta.from_dict(data.get("meta", {})),
             config=ProjectConfig.from_dict(data.get("config", {})),
@@ -233,6 +239,7 @@ class ProjectStateManager:
     """
 
     def __init__(self, project_path: str):
+        """Initialize the ProjectStateManager."""
         self.project_path = project_path
         self.flyto_path = os.path.join(project_path, ".flyto")
         self._state: Optional[ProjectState] = None
@@ -313,9 +320,7 @@ class ProjectStateManager:
 
     def save_goal(self, goal: Goal) -> bool:
         """Save goal to separate file for history."""
-        goal_file = os.path.join(
-            self.flyto_path, "goals", f"{goal.goal_id}.json"
-        )
+        goal_file = os.path.join(self.flyto_path, "goals", f"{goal.goal_id}.json")
 
         try:
             with open(goal_file, "w") as f:

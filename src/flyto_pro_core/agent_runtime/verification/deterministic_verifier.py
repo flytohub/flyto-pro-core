@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def _get_assertion_type_str(assertion_type: Any) -> str:
     """Get assertion type as string, whether it's an enum or string."""
-    if hasattr(assertion_type, 'value'):
+    if hasattr(assertion_type, "value"):
         return assertion_type.value
     return str(assertion_type)
 
@@ -85,6 +85,7 @@ class AssertionExecutor:
     """
 
     def __init__(self):
+        """Initialize the AssertionExecutor."""
         self._executors: Dict[AssertionType, Callable] = {
             AssertionType.EQUALS: self._execute_equals,
             AssertionType.CONTAINS: self._execute_contains,
@@ -121,7 +122,11 @@ class AssertionExecutor:
         try:
             # Convert assertion_type to enum (handles both string and enum)
             assertion_type_enum = _get_assertion_type_enum(assertion.assertion_type)
-            executor = self._executors.get(assertion_type_enum) if assertion_type_enum else None
+            executor = (
+                self._executors.get(assertion_type_enum)
+                if assertion_type_enum
+                else None
+            )
 
             if not executor:
                 return AssertionResult(
@@ -239,9 +244,7 @@ class AssertionExecutor:
         if assertion.expression.startswith("filesystem."):
             if context.observation.filesystem:
                 path = assertion.expected
-                created = [
-                    f.path for f in context.observation.filesystem.files_created
-                ]
+                created = [f.path for f in context.observation.filesystem.files_created]
                 modified = [
                     f.path for f in context.observation.filesystem.files_modified
                 ]
@@ -365,7 +368,11 @@ class AssertionExecutor:
         assertion: Assertion,
     ) -> AssertionResult:
         """Execute custom assertion."""
-        custom_name = assertion.expression.split(":")[0] if ":" in assertion.expression else assertion.expression
+        custom_name = (
+            assertion.expression.split(":")[0]
+            if ":" in assertion.expression
+            else assertion.expression
+        )
 
         executor = self._custom_executors.get(custom_name)
         if not executor:
@@ -392,6 +399,7 @@ class DeterministicVerifier:
     """
 
     def __init__(self):
+        """Initialize the DeterministicVerifier."""
         self._executor = AssertionExecutor()
         self._evidence_pipeline = get_evidence_pipeline()
 
@@ -484,7 +492,9 @@ class DeterministicVerifier:
                 import json
 
                 dom_hash = hashlib.sha256(
-                    json.dumps(observation.browser.dom_snapshot, sort_keys=True).encode()
+                    json.dumps(
+                        observation.browser.dom_snapshot, sort_keys=True
+                    ).encode()
                 ).hexdigest()[:16]
 
                 evidence_list.append(
@@ -560,9 +570,7 @@ class DeterministicVerifier:
         affected_ids = [r.assertion_id for r in failed_results]
 
         # Determine failure type
-        has_hard_failures = any(
-            r.level == AssertionLevel.HARD for r in failed_results
-        )
+        has_hard_failures = any(r.level == AssertionLevel.HARD for r in failed_results)
         has_errors = observation.has_errors()
 
         if has_errors and observation.runtime and observation.runtime.error_stacks:
@@ -576,9 +584,7 @@ class DeterministicVerifier:
             root_cause = "Soft assertion threshold not met"
 
         # Check for common patterns
-        browser_failures = [
-            r for r in failed_results if "browser" in r.expression
-        ]
+        browser_failures = [r for r in failed_results if "browser" in r.expression]
         db_failures = [r for r in failed_results if "database" in r.expression]
         _file_failures = [r for r in failed_results if "filesystem" in r.expression]
 
@@ -586,11 +592,15 @@ class DeterministicVerifier:
             if observation.browser.console_errors:
                 root_cause = f"Browser errors: {observation.browser.console_errors[0]}"
             elif observation.browser.network_failed:
-                root_cause = f"Network failures: {observation.browser.network_failed[0]}"
+                root_cause = (
+                    f"Network failures: {observation.browser.network_failed[0]}"
+                )
 
         if db_failures and observation.database:
             if observation.database.connection_status != "connected":
-                root_cause = f"Database connection: {observation.database.connection_status}"
+                root_cause = (
+                    f"Database connection: {observation.database.connection_status}"
+                )
 
         return FailureAnalysis(
             failure_type=failure_type,

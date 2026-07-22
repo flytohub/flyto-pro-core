@@ -126,8 +126,7 @@ class StopPolicy:
             repeated_error_threshold=data.get("repeated_error_threshold", 3),
             require_confirmation_for=data.get("require_confirmation_for", []),
             fallback_policies=[
-                FallbackPolicy.from_dict(p)
-                for p in data.get("fallback_policies", [])
+                FallbackPolicy.from_dict(p) for p in data.get("fallback_policies", [])
             ],
         )
 
@@ -140,6 +139,7 @@ class StopPolicyChecker:
     """
 
     def __init__(self, policy: StopPolicy):
+        """Initialize the StopPolicyChecker."""
         self.policy = policy
         self.iteration_count = 0
         self.total_cost = 0.0
@@ -237,7 +237,8 @@ class StopPolicyChecker:
         # Check repeated errors
         if self._has_repeated_error():
             repeated_errors = [
-                k for k, v in self.error_counts.items()
+                k
+                for k, v in self.error_counts.items()
                 if v >= self.policy.repeated_error_threshold
             ]
             return (

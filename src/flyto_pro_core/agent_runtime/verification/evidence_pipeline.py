@@ -78,6 +78,7 @@ class RawEvidence:
     retention_policy: RetentionPolicy = RetentionPolicy.KEEP_ON_FAILURE
 
     def __post_init__(self):
+        """Normalize RawEvidence fields after initialization."""
         if self.raw_data and not self.hash:
             self.hash = hashlib.sha256(self.raw_data).hexdigest()
             self.size_bytes = len(self.raw_data)
@@ -138,6 +139,7 @@ class DerivedEvidence:
     computation_time_ms: int = 0
 
     def __post_init__(self):
+        """Normalize DerivedEvidence fields after initialization."""
         if not self.evidence_id:
             self.evidence_id = str(uuid.uuid4())[:12]
 
@@ -177,6 +179,7 @@ class EvidencePipeline:
     """
 
     def __init__(self, storage_path: str = "/tmp/flyto_evidence"):
+        """Initialize the EvidencePipeline."""
         self.storage_path = storage_path
         self._derivers: Dict[str, Callable] = {}
         self._raw_store: Dict[str, RawEvidence] = {}
@@ -418,12 +421,9 @@ class EvidencePipeline:
             if eid in keep_ids:
                 continue
 
-            if (
-                evidence.retention_policy == RetentionPolicy.DELETE_AFTER_VERIFY
-                or (
-                    evidence.retention_policy == RetentionPolicy.KEEP_ON_FAILURE
-                    and not keep_on_failure
-                )
+            if evidence.retention_policy == RetentionPolicy.DELETE_AFTER_VERIFY or (
+                evidence.retention_policy == RetentionPolicy.KEEP_ON_FAILURE
+                and not keep_on_failure
             ):
                 to_remove.append(eid)
 

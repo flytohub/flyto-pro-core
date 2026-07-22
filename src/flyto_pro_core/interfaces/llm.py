@@ -19,7 +19,9 @@ class ToolCallRequest:
 
     name: str
     description: str = ""
-    parameters: Dict[str, Any] = field(default_factory=lambda: {"type": "object", "properties": {}})
+    parameters: Dict[str, Any] = field(
+        default_factory=lambda: {"type": "object", "properties": {}}
+    )
 
 
 @dataclass
@@ -43,6 +45,7 @@ class LLMResponse:
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
+        """Normalize LLMResponse fields after initialization."""
         if self.metadata is None:
             self.metadata = {}
         if self.tool_calls is None:
@@ -257,5 +260,3 @@ class IEmbeddingService(ABC):
     async def is_available(self) -> bool:
         """Check if the service is available."""
         pass
-
-

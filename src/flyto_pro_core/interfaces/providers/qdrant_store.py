@@ -33,12 +33,14 @@ class QdrantVectorStore(IVectorStoreRepository):
         api_key: Optional[str] = None,
         **client_kwargs: Any,
     ):
+        """Initialize the QdrantVectorStore."""
         self._url = url or os.getenv("QDRANT_URL", _DEFAULT_URL)
         self._api_key = api_key or os.getenv("QDRANT_API_KEY")
         self._client_kwargs = client_kwargs
         self._client = None
 
     def _get_client(self):
+        """Create or return the lazily initialized provider client."""
         if self._client is None:
             try:
                 from qdrant_client import QdrantClient
@@ -60,6 +62,7 @@ class QdrantVectorStore(IVectorStoreRepository):
         vector: List[float],
         payload: Optional[Dict[str, Any]] = None,
     ) -> bool:
+        """Insert or replace one vector point."""
         from qdrant_client.models import PointStruct
 
         client = self._get_client()
@@ -80,6 +83,7 @@ class QdrantVectorStore(IVectorStoreRepository):
         collection: str,
         points: List[Dict[str, Any]],
     ) -> int:
+        """Insert or replace a batch of vector points."""
         from qdrant_client.models import PointStruct
 
         client = self._get_client()
@@ -102,6 +106,7 @@ class QdrantVectorStore(IVectorStoreRepository):
         score_threshold: Optional[float] = None,
         filter_conditions: Optional[Dict[str, Any]] = None,
     ) -> List[VectorSearchResult]:
+        """Search the vector collection for nearest points."""
         client = self._get_client()
 
         kwargs: Dict[str, Any] = {
@@ -130,6 +135,7 @@ class QdrantVectorStore(IVectorStoreRepository):
         collection: str,
         ids: List[str],
     ) -> int:
+        """Delete the requested resource."""
         from qdrant_client.models import PointIdsList
 
         client = self._get_client()
@@ -144,6 +150,7 @@ class QdrantVectorStore(IVectorStoreRepository):
         collection: str,
         id: str,
     ) -> Optional[VectorSearchResult]:
+        """Get one vector point by identifier."""
         client = self._get_client()
         results = client.retrieve(
             collection_name=collection,
@@ -165,6 +172,7 @@ class QdrantVectorStore(IVectorStoreRepository):
         dimension: int,
         distance_metric: str = "cosine",
     ) -> bool:
+        """Create the configured vector collection."""
         from qdrant_client.models import Distance, VectorParams
 
         client = self._get_client()
@@ -185,11 +193,13 @@ class QdrantVectorStore(IVectorStoreRepository):
         return True
 
     async def delete_collection(self, name: str) -> bool:
+        """Delete the configured vector collection."""
         client = self._get_client()
         client.delete_collection(name)
         return True
 
     async def collection_exists(self, name: str) -> bool:
+        """Return whether the configured vector collection exists."""
         client = self._get_client()
         return client.collection_exists(name)
 

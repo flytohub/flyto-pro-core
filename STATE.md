@@ -1,13 +1,44 @@
 # State
 
-Current state on 2026-06-21:
+Current as of 2026-07-22.
 
-- Repo status: active
-- Product lines: cloud_apps_automation, security, zero_person_agent
-- Health target: C
+- Status: active open-source Python library.
+- Package metadata version: `0.1.2`.
+- Published PyPI version: `0.1.1`; `0.1.2` is prepared but is not published
+  until a matching GitHub release is created.
+- Public API inventory: 923 public Python classes, functions, and methods,
+  generated into `docs/reference/python-api.md`; generation fails when a public
+  callable lacks a docstring.
+- Runtime contract inventory: 430 contracts in the audited workspace (427 from
+  Flyto2 Core plus three local overrides). Counts are discovered at runtime and
+  are not presented as a permanent product promise.
+- Configuration inventory: 72 documented environment variables with generated
+  `.env.example` and reference documentation.
+- Automated tests: 46 focused tests covering Factory behavior, deterministic
+  enrichment, current Blueprint compatibility, settings precedence, registry
+  loading, parameter aliases, union types, and metadata round trips.
+- Offline integration contracts: 45 deterministic Factory scenarios and 100
+  sibling `flyto-pro` seed conversions.
+- CI: Ruff, generated-reference drift checks, pytest on Python
+  3.10/3.11/3.12/3.13, build and installed-wheel smoke tests, strict Flyto2
+  Indexer verification, dependency audit, security/SBOM, branding, and
+  documentation-contract checks.
+- Latest local closed loop: `python scripts/verify.py` passed with Flyto2
+  Indexer 17/17, documentation score 100, and no secret or taint findings.
+- Clean Python 3.11 installation resolved the public PyPI Blueprint/Core
+  dependencies, passed all tests and `pip check`, and reported no known
+  dependency vulnerabilities after upgrading the CI build toolchain.
 
-Known release work:
+The package version exported by `flyto_pro_core.__version__` now matches
+`pyproject.toml`. Contract payload defaults such as `1.0.0` remain schema
+versions and are intentionally independent.
 
-- Keep project memory current.
-- Run repo-specific lint, tests, build, and release gates before production.
-- Document unresolved P0/P1 work in `tasks.md` or `handoffs/`.
+Behavioral coverage is still concentrated on Factory, configuration, and the
+Core contract adapter. Cost enforcement, provider adapters, interventions,
+evidence pipelines, and the complete deterministic verifier require broader
+direct tests before the package can claim production stability.
+
+Mypy remains advisory: mypy 2.3.0 currently reports 109 errors across 21 source
+files, primarily implicit optional annotations, mutable container variance, and
+optional integration members. CI installs and runs mypy so this debt remains
+visible; it is not yet a blocking release gate.

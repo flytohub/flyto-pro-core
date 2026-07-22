@@ -25,35 +25,37 @@ from flyto_pro_core.factory.enrich import enrich_template
 
 @pytest.fixture
 def engine():
+    """Create an isolated Blueprint engine fixture."""
     return BlueprintEngine(storage=MemoryBackend())
 
 
 class TestPipelineEndToEnd:
+    """Tests for PipelineEndToEnd behavior."""
 
     @pytest.mark.asyncio
-    async def test_qrcode(self, engine):
-        result = await generate_v2("Generate a QR code", blueprint_engine=engine)
-        assert result.ok
-        assert any(s["module"] == "image.qrcode_generate" for s in result.steps)
-
-    @pytest.mark.asyncio
-    async def test_split_and_qr(self, engine):
-        result = await generate_v2("Split text and generate QR for each", blueprint_engine=engine)
-        assert result.ok
-        modules = [s["module"] for s in result.steps]
-        assert "string.split" in modules
-        assert "image.qrcode_generate" in modules
-        assert "flow.foreach" in modules
-
-    @pytest.mark.asyncio
-    async def test_http_get(self, engine):
+    async def test_api_get(self, engine):
+        """Verify api get."""
         result = await generate_v2("HTTP GET request", blueprint_engine=engine)
         assert result.ok
-        assert result.steps[0]["module"] == "http.get"
+        assert [step["module"] for step in result.steps] == ["http.get"]
+
+    @pytest.mark.asyncio
+    async def test_api_fetch_and_save(self, engine):
+        """Verify api fetch and save."""
+        result = await generate_v2(
+            "Fetch an API and save it to a file", blueprint_engine=engine
+        )
+        assert result.ok
+        modules = [s["module"] for s in result.steps]
+        assert modules == ["http.get", "file.write"]
 
     @pytest.mark.asyncio
     async def test_fetch_and_notify(self, engine):
-        result = await generate_v2("Health check a website and send Slack notification", blueprint_engine=engine)
+        """Verify fetch and notify."""
+        result = await generate_v2(
+            "Health check a website and send Slack notification",
+            blueprint_engine=engine,
+        )
         assert result.ok
         modules = [s["module"] for s in result.steps]
         assert "http.get" in modules
@@ -61,7 +63,8 @@ class TestPipelineEndToEnd:
 
     @pytest.mark.asyncio
     async def test_yaml_roundtrip(self, engine):
-        result = await generate_v2("Write text to file", blueprint_engine=engine)
+        """Verify yaml roundtrip."""
+        result = await generate_v2("Resize an image", blueprint_engine=engine)
         assert result.ok
         workflow = {"steps": result.steps, "edges": result.edges}
         yaml_str = yaml.dump(workflow, default_flow_style=False, allow_unicode=True)
@@ -70,13 +73,16 @@ class TestPipelineEndToEnd:
 
     @pytest.mark.asyncio
     async def test_no_match(self, engine):
+        """Verify no match."""
         result = await generate_v2("xyzzy foobar nonexistent", blueprint_engine=engine)
         assert result.ok is False
 
 
 class TestConverterEndToEnd:
+    """Tests for ConverterEndToEnd behavior."""
 
     def test_zapier_seed_converts(self):
+        """Verify zapier seed converts."""
         wf = modules_to_workflow(
             modules=["http.get", "string.template", "slack.send"],
             name="Test Zapier Seed",
@@ -90,9 +96,13 @@ class TestConverterEndToEnd:
         assert "{{webhook_url}}" == wf["steps"][2]["params"]["webhook_url"]
 
     def test_all_100_seeds_convert(self):
+        """Verify all 100 seeds convert."""
         import sys
         from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "flyto-pro"))
+
+        sys.path.insert(
+            0, str(Path(__file__).resolve().parent.parent.parent / "flyto-pro")
+        )
         try:
             from src.pro.factory.seed_bank import SEED_TEMPLATES
         except ImportError:
@@ -101,34 +111,52 @@ class TestConverterEndToEnd:
         for seed in SEED_TEMPLATES:
             wf = modules_to_workflow(modules=seed.modules, name=seed.description[:60])
             assert len(wf["steps"]) > 0, f"Empty steps for: {seed.description}"
-            assert len(wf["edges"]) == len(wf["steps"]) - 1, f"Edge count wrong for: {seed.description}"
+            assert len(wf["edges"]) == len(wf["steps"]) - 1, (
+                f"Edge count wrong for: {seed.description}"
+            )
 
 
 class TestEnrichEndToEnd:
+    """Tests for EnrichEndToEnd behavior."""
 
     def test_enrich_adds_flow_start(self):
+        """Verify enrich adds flow start."""
         steps = [{"id": "s1", "module": "http.get", "params": {"url": "{{url}}"}}]
         template = enrich_template(steps=steps, edges=[], name="Test")
         assert template["steps"][0]["module"] == "flow.start"
         assert len(template["steps"]) == 2
 
     def test_enrich_adds_positions(self):
+        """Verify enrich adds positions."""
         steps = [
             {"id": "s1", "module": "http.get", "params": {"url": "{{url}}"}},
-            {"id": "s2", "module": "file.write", "params": {"path": "{{path}}", "content": "${s1.data.body}"}},
+            {
+                "id": "s2",
+                "module": "file.write",
+                "params": {"path": "{{path}}", "content": "${s1.data.body}"},
+            },
         ]
-        template = enrich_template(steps=steps, edges=[{"source": "s1", "target": "s2"}], name="Test")
+        template = enrich_template(
+            steps=steps, edges=[{"source": "s1", "target": "s2"}], name="Test"
+        )
         for step in template["steps"]:
             assert "positionX" in step
             assert "positionY" in step
             assert "orderIndex" in step
 
     def test_enrich_adds_edges(self):
+        """Verify enrich adds edges."""
         steps = [
             {"id": "s1", "module": "http.get", "params": {"url": "{{url}}"}},
-            {"id": "s2", "module": "file.write", "params": {"content": "${s1.data.body}"}},
+            {
+                "id": "s2",
+                "module": "file.write",
+                "params": {"content": "${s1.data.body}"},
+            },
         ]
-        template = enrich_template(steps=steps, edges=[{"source": "s1", "target": "s2"}], name="Test")
+        template = enrich_template(
+            steps=steps, edges=[{"source": "s1", "target": "s2"}], name="Test"
+        )
         assert len(template["edges"]) >= 2  # start→s1, s1→s2
         for edge in template["edges"]:
             assert "sourceHandle" in edge
@@ -136,6 +164,7 @@ class TestEnrichEndToEnd:
             assert "type" in edge
 
     def test_enrich_builds_ui(self):
+        """Verify enrich builds ui."""
         steps = [{"id": "s1", "module": "http.get", "params": {"url": "{{url}}"}}]
         template = enrich_template(steps=steps, edges=[], name="Test")
         assert "_ui" in template
@@ -149,7 +178,40 @@ class TestEnrichEndToEnd:
         assert any(c["id"] == "url" for c in all_comps)
 
     def test_enrich_sections_have_id(self):
+        """Verify enrich sections have id."""
         steps = [{"id": "s1", "module": "http.get", "params": {"url": "{{url}}"}}]
         template = enrich_template(steps=steps, edges=[], name="Test")
         for sec in template["_ui"]["builder"]["sections"]:
             assert "id" in sec, "Section missing 'id' field"
+
+    def test_enrich_is_deterministic_and_preserves_explicit_edges(self):
+        """Verify deterministic IDs, descriptions, labels, and explicit edges."""
+        steps = [
+            {"id": "fetch", "module": "http.get", "label": "Fetch", "params": {}},
+            {"id": "save", "module": "file.write", "label": "Save", "params": {}},
+        ]
+        edges = [{"source": "fetch", "target": "save"}]
+
+        first = enrich_template(
+            steps=steps,
+            edges=edges,
+            name="Stable",
+            description="Stable output",
+        )
+        second = enrich_template(
+            steps=steps,
+            edges=edges,
+            name="Stable",
+            description="Stable output",
+        )
+
+        assert first == second
+        assert first["description"] == "Stable output"
+        assert [step["label"] for step in first["steps"]] == [
+            "Start",
+            "Fetch",
+            "Save",
+        ]
+        assert len(first["edges"]) == 2
+        assert first["edges"][1]["source"] == first["steps"][1]["id"]
+        assert first["edges"][1]["target"] == first["steps"][2]["id"]

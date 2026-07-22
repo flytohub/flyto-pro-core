@@ -1,160 +1,89 @@
-"""
-Real end-to-end factory v2 — calls real OpenAI, real BlueprintEngine.
-Outputs YAML files to ./output/
+#!/usr/bin/env python3
+"""Generate deterministic Factory examples from the installed Blueprint catalog.
 
-Usage:
-    cd flyto-pro-core
-    python generate_real.py
+The historical filename is retained for compatibility. This script is offline:
+it does not load credentials, call an LLM, or execute the generated workflows.
 """
+
+from __future__ import annotations
 
 import asyncio
-import os
-import re
-import sys
+import argparse
 from pathlib import Path
 
 import yaml
+from flyto_blueprint import BlueprintEngine
+from flyto_blueprint.storage.memory import MemoryBackend
 
-# Load .env from flyto-pro
-env_path = Path(__file__).resolve().parent.parent / "flyto-pro" / ".env"
-if env_path.exists():
-    for line in env_path.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
-
-# Add sibling projects to path
-_base = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_base / "flyto-core"))
-sys.path.insert(0, str(_base / "flyto-pro"))
-
-from flyto_blueprint import BlueprintEngine  # noqa: E402
-from flyto_blueprint.storage.memory import MemoryBackend  # noqa: E402
-from flyto_pro_core.factory.pipeline import generate_v2  # noqa: E402
-from flyto_pro_core.interfaces.providers.openai_llm import OpenAILLMService  # noqa: E402
-
-OUTPUT_DIR = Path(__file__).parent / "output"
+from flyto_pro_core.factory.enrich import enrich_template
+from flyto_pro_core.factory.pipeline import generate_v2
 
 
+ROOT = Path(__file__).resolve().parent
+OUTPUT_DIR = ROOT / "output"
 SCENARIOS = [
-    "Split text into lines and generate a QR code for each line",
-    "Fetch API health check and send Slack notification",
-    "AI summarize sales data and email to manager",
-    "Fetch JSON from API and save to file",
-    "Split a list of URLs and fetch each one",
+    "HTTP GET request",
+    "Fetch an API and save it to a file",
+    "Health check a website",
+    "Send a Slack message",
+    "Resize an image",
 ]
 
 
-async def main():
+async def main(*, check: bool = False) -> int:
+    """Generate one enriched YAML example for every supported scenario."""
     OUTPUT_DIR.mkdir(exist_ok=True)
-
-    key = os.getenv("OPENAI_API_KEY")
-    if not key:
-        print("ERROR: OPENAI_API_KEY not set")
-        sys.exit(1)
-
-    print(f"OpenAI key: {key[:8]}...{key[-4:]}")
-    print(f"Output dir: {OUTPUT_DIR}\n")
-
     engine = BlueprintEngine(storage=MemoryBackend())
-    _llm = OpenAILLMService(model="gpt-4o")
+    failures = []
+    expected_paths = set()
 
-    print(f"Loaded {len(engine._blueprints)} blueprints")
-
-    # Load module schemas via SandboxExecutor (it already loads flyto-core registry)
-    module_schemas = {}
-    try:
-        from src.pro.factory.sandbox import SandboxExecutor as _SE
-        _sandbox_for_schemas = _SE.from_registry()
-        for mid, ps in _sandbox_for_schemas._module_params_schema.items():
-            if not ps or not isinstance(ps, dict):
-                continue
-            properties = {}
-            required_fields = []
-            for fname, fdef in ps.items():
-                if isinstance(fdef, dict):
-                    properties[fname] = fdef
-                    if fdef.get("required"):
-                        required_fields.append(fname)
-            module_schemas[mid] = {"properties": properties, "required": required_fields}
-        print(f"Loaded {len(module_schemas)} module schemas")
-    except Exception as e:
-        print(f"Module schemas not available: {e}")
-    print()
-
-    # SandboxExecutor for post-generation validation
-    sandbox = None
-    try:
-        from src.pro.factory.sandbox import SandboxExecutor
-        sandbox = SandboxExecutor.from_registry()
-        print("SandboxExecutor: available (will validate)\n")
-    except ImportError:
-        print("SandboxExecutor: not available (skipping validation)\n")
-
-    for i, desc in enumerate(SCENARIOS, 1):
-        print(f"[{i}/{len(SCENARIOS)}] {desc}")
-        print("-" * 60)
-
-        result = await generate_v2(
-            description=desc,
-            blueprint_engine=engine,
-            # No LLM — pure search-based selection
-        )
-
+    for index, description in enumerate(SCENARIOS, 1):
+        result = await generate_v2(description, blueprint_engine=engine)
         if not result.ok:
-            print(f"  FAILED: {result.error}\n")
+            failures.append(f"{description}: {result.error}")
             continue
 
-        # Sandbox validation BEFORE enrichment
-        # Sandbox expects ${params.X} and ${step.field}, not {{X}} and ${steps.X.field}
-        if sandbox:
-            import copy as _copy
-            sandbox_steps = _copy.deepcopy(result.steps)
-            for s in sandbox_steps:
-                for k, v in s.get("params", {}).items():
-                    if isinstance(v, str):
-                        v = re.sub(r"\{\{(\w+)\}\}", r"${params.\1}", v)  # {{X}} → ${params.X}
-                        v = re.sub(r"\$\{steps\.(\w+)\.", r"${\1.", v)  # ${steps.X. → ${X.
-                        s["params"][k] = v
-            pre_workflow = {
-                "name": desc, "description": desc,
-                "steps": sandbox_steps, "edges": result.edges,
-            }
-            sr = await sandbox.execute(pre_workflow)
-            if sr.success:
-                print("  ✓ SANDBOX PASS")
-            else:
-                print("  ✗ SANDBOX FAIL:")
-                for err in sr.errors:
-                    print(f"    - {err}")
-
-        # Phase 3: Enrich to full template format (converts to ${steps.X.Y} canvas format)
-        from flyto_pro_core.factory.enrich import enrich_template
         template = enrich_template(
             steps=result.steps,
             edges=result.edges,
-            name=desc,
-            description=desc,
-            module_schemas=module_schemas,
+            name=description,
+            description=description,
         )
+        filename = f"example_{index:02d}_{result.recipe.blueprints[0]}.yaml"
+        output = OUTPUT_DIR / filename
+        expected_paths.add(output)
+        content = yaml.safe_dump(template, allow_unicode=True, sort_keys=False)
+        if check:
+            current = (
+                await asyncio.to_thread(output.read_text, encoding="utf-8")
+                if output.exists()
+                else None
+            )
+            if current != content:
+                failures.append(f"stale generated example: {output.relative_to(ROOT)}")
+        else:
+            await asyncio.to_thread(output.write_text, content, encoding="utf-8")
+            print(
+                f"generated {output.relative_to(ROOT)} ({len(template['steps'])} steps)"
+            )
 
-        # Save YAML
-        filename = f"{i:02d}_{desc[:40].replace(' ', '_').replace('/', '_')}.yaml"
-        path = OUTPUT_DIR / filename
-        yaml_str = yaml.dump(template, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        path.write_text(yaml_str)
+    unexpected = set(OUTPUT_DIR.glob("example_*.yaml")) - expected_paths
+    failures.extend(
+        f"unexpected generated example: {path.relative_to(ROOT)}"
+        for path in sorted(unexpected)
+    )
 
-        print(f"  Blueprints: {result.recipe.blueprints}")
-        print(f"  Steps: {len(template['steps'])}")
-        print(f"  Edges: {len(template['edges'])}")
-        print(f"  Output: {path}")
-        print()
-        print(yaml_str)
-        print()
-
-    print(f"Done. Files in {OUTPUT_DIR}/")
+    if failures:
+        for failure in failures:
+            print(f"ERROR: {failure}")
+        return 1
+    if check:
+        print(f"Factory example contract passed: {len(expected_paths)} files")
+    return 0
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true")
+    arguments = parser.parse_args()
+    raise SystemExit(asyncio.run(main(check=arguments.check)))

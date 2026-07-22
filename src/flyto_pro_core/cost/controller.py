@@ -27,6 +27,7 @@ class BudgetExceededError(Exception):
         budget: float,
         resource_type: str = "cost",
     ):
+        """Initialize the BudgetExceededError."""
         super().__init__(message)
         self.spent = spent
         self.budget = budget
@@ -36,6 +37,7 @@ class BudgetExceededError(Exception):
 @dataclass
 class UsageRecord:
     """Record of resource usage."""
+
     model: str
     prompt_tokens: int
     completion_tokens: int
@@ -46,6 +48,7 @@ class UsageRecord:
 @dataclass
 class BudgetConfig:
     """Budget configuration for an execution."""
+
     max_cost_usd: float = 1.0
     max_tokens: int = 100000
     max_tool_calls: int = 50
@@ -108,6 +111,7 @@ class CostController:
     """
 
     def __init__(self, budget: Optional[BudgetConfig] = None):
+        """Initialize the CostController."""
         self.budget = budget or BudgetConfig.from_env()
         self._cost_spent: float = 0.0
         self._tokens_used: int = 0

@@ -37,6 +37,7 @@ class ObservationCollector:
     """
 
     def __init__(self):
+        """Initialize the ObservationCollector."""
         self._observations: List[ObservationPacket] = []
         self._step_traces: List[StepTrace] = []
         self._module_ios: List[ModuleIO] = []

@@ -59,6 +59,7 @@ class ErrorSignature:
     similarity_threshold: float = 0.8
 
     def __post_init__(self):
+        """Normalize ErrorSignature fields after initialization."""
         if not self.signature_hash and self.components:
             self.signature_hash = self._compute_hash()
 
@@ -109,6 +110,7 @@ class ErrorSignature:
         return score >= self.similarity_threshold, score
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "signature_hash": self.signature_hash,
             "components": self.components,
@@ -125,6 +127,7 @@ class ErrorSignature:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ErrorSignature":
+        """Create an instance from a dictionary."""
         return cls(
             signature_hash=data.get("signature_hash", ""),
             components=data.get("components", {}),
@@ -284,9 +287,7 @@ def compute_error_signature(
         key_frames = StackNormalizer.extract_key_frames(stack_trace)
         if key_frames:
             entry_point = key_frames[0]
-            components[SignatureComponent.STACK_FRAME.value] = "|".join(
-                key_frames[:3]
-            )
+            components[SignatureComponent.STACK_FRAME.value] = "|".join(key_frames[:3])
 
     # Add module/step info
     if module_id:

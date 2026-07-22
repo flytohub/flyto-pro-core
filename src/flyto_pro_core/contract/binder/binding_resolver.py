@@ -77,6 +77,7 @@ class BindingEntry:
     shape: Optional[str] = None  # For complex types
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "path": self.path,
             "data_type": self.data_type,
@@ -124,14 +125,16 @@ class BindingTree:
             "shape": shape,
         }
 
-        self.all_bindings.append(BindingEntry(
-            path=f"steps.{node_id}.{field_name}",
-            data_type=data_type,
-            source=BindingSource.STEP,
-            source_id=node_id,
-            label=label or field_name,
-            shape=shape,
-        ))
+        self.all_bindings.append(
+            BindingEntry(
+                path=f"steps.{node_id}.{field_name}",
+                data_type=data_type,
+                source=BindingSource.STEP,
+                source_id=node_id,
+                label=label or field_name,
+                shape=shape,
+            )
+        )
 
     def add_loop_binding(
         self,
@@ -145,13 +148,15 @@ class BindingTree:
             "shape": shape,
         }
 
-        self.all_bindings.append(BindingEntry(
-            path=f"loop.{var_name}",
-            data_type=data_type,
-            source=BindingSource.LOOP,
-            label=var_name,
-            shape=shape,
-        ))
+        self.all_bindings.append(
+            BindingEntry(
+                path=f"loop.{var_name}",
+                data_type=data_type,
+                source=BindingSource.LOOP,
+                label=var_name,
+                shape=shape,
+            )
+        )
 
     def add_system_binding(
         self,
@@ -165,13 +170,15 @@ class BindingTree:
             "description": description,
         }
 
-        self.all_bindings.append(BindingEntry(
-            path=f"system.{var_name}",
-            data_type=data_type,
-            source=BindingSource.SYSTEM,
-            label=var_name,
-            description=description,
-        ))
+        self.all_bindings.append(
+            BindingEntry(
+                path=f"system.{var_name}",
+                data_type=data_type,
+                source=BindingSource.SYSTEM,
+                label=var_name,
+                description=description,
+            )
+        )
 
     def search(self, query: str) -> List[BindingEntry]:
         """Search bindings by path or label."""
@@ -179,15 +186,15 @@ class BindingTree:
         results = []
 
         for binding in self.all_bindings:
-            if (
-                query_lower in binding.path.lower()
-                or (binding.label and query_lower in binding.label.lower())
+            if query_lower in binding.path.lower() or (
+                binding.label and query_lower in binding.label.lower()
             ):
                 results.append(binding)
 
         return results
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "steps": self.steps,
             "loop": self.loop,
@@ -218,6 +225,7 @@ class BindingResolver:
     }
 
     def __init__(self, registry: Optional[ContractRegistry] = None):
+        """Initialize the BindingResolver."""
         self.registry = registry or ContractRegistry.instance()
 
     async def get_available_bindings(
@@ -464,13 +472,15 @@ class BindingResolver:
 
             tree.ui[input_name] = {"type": data_type}
 
-            tree.all_bindings.append(BindingEntry(
-                path=f"ui.{input_name}",
-                data_type=data_type,
-                source=BindingSource.UI,
-                label=input_name,
-                description=description,
-            ))
+            tree.all_bindings.append(
+                BindingEntry(
+                    path=f"ui.{input_name}",
+                    data_type=data_type,
+                    source=BindingSource.UI,
+                    label=input_name,
+                    description=description,
+                )
+            )
 
     def _add_system_bindings(self, tree: BindingTree) -> None:
         """Add system variable bindings."""
@@ -498,12 +508,14 @@ class BindingResolver:
 
             tree.workflow[var_name] = {"type": data_type, "value": var_value}
 
-            tree.all_bindings.append(BindingEntry(
-                path=f"workflow.{var_name}",
-                data_type=data_type,
-                source=BindingSource.WORKFLOW,
-                label=var_name,
-            ))
+            tree.all_bindings.append(
+                BindingEntry(
+                    path=f"workflow.{var_name}",
+                    data_type=data_type,
+                    source=BindingSource.WORKFLOW,
+                    label=var_name,
+                )
+            )
 
     async def resolve_expression(
         self,

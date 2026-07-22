@@ -32,6 +32,7 @@ class TechDecisionTranslator:
 
     def __init__(self):
         # Technical term translations by level
+        """Initialize the TechDecisionTranslator."""
         self._translations: Dict[str, Dict[str, str]] = {
             "beginner": {},
             "intermediate": {},
@@ -50,54 +51,58 @@ class TechDecisionTranslator:
     def _init_defaults(self) -> None:
         """Initialize default translations."""
         # Beginner-level translations
-        self._translations["beginner"].update({
-            "API": "connection to external service",
-            "database": "data storage",
-            "server": "web server",
-            "client": "browser",
-            "frontend": "what users see",
-            "backend": "behind-the-scenes processing",
-            "deploy": "publish online",
-            "repository": "code storage",
-            "branch": "version of code",
-            "merge": "combine code changes",
-            "commit": "save code changes",
-            "dependency": "required component",
-            "package": "pre-built component",
-            "module": "code unit",
-            "function": "action",
-            "variable": "stored value",
-            "parameter": "input value",
-            "return value": "result",
-            "exception": "error",
-            "stack trace": "error details",
-            "timeout": "took too long",
-            "authentication": "login verification",
-            "authorization": "access permission",
-            "token": "access key",
-            "session": "login period",
-            "cache": "temporary storage",
-            "queue": "waiting list",
-            "webhook": "automatic notification",
-            "endpoint": "service address",
-        })
+        self._translations["beginner"].update(
+            {
+                "API": "connection to external service",
+                "database": "data storage",
+                "server": "web server",
+                "client": "browser",
+                "frontend": "what users see",
+                "backend": "behind-the-scenes processing",
+                "deploy": "publish online",
+                "repository": "code storage",
+                "branch": "version of code",
+                "merge": "combine code changes",
+                "commit": "save code changes",
+                "dependency": "required component",
+                "package": "pre-built component",
+                "module": "code unit",
+                "function": "action",
+                "variable": "stored value",
+                "parameter": "input value",
+                "return value": "result",
+                "exception": "error",
+                "stack trace": "error details",
+                "timeout": "took too long",
+                "authentication": "login verification",
+                "authorization": "access permission",
+                "token": "access key",
+                "session": "login period",
+                "cache": "temporary storage",
+                "queue": "waiting list",
+                "webhook": "automatic notification",
+                "endpoint": "service address",
+            }
+        )
 
         # Intermediate-level (more technical but still simplified)
-        self._translations["intermediate"].update({
-            "API": "API (Application Programming Interface)",
-            "REST": "REST API",
-            "GraphQL": "GraphQL API",
-            "HTTP": "HTTP protocol",
-            "CORS": "Cross-Origin Resource Sharing",
-            "JWT": "JSON Web Token",
-            "OAuth": "OAuth authentication",
-            "SSL/TLS": "encrypted connection",
-            "DNS": "domain name system",
-            "CDN": "content delivery network",
-            "CI/CD": "automated testing and deployment",
-            "Docker": "containerized application",
-            "Kubernetes": "container orchestration",
-        })
+        self._translations["intermediate"].update(
+            {
+                "API": "API (Application Programming Interface)",
+                "REST": "REST API",
+                "GraphQL": "GraphQL API",
+                "HTTP": "HTTP protocol",
+                "CORS": "Cross-Origin Resource Sharing",
+                "JWT": "JSON Web Token",
+                "OAuth": "OAuth authentication",
+                "SSL/TLS": "encrypted connection",
+                "DNS": "domain name system",
+                "CDN": "content delivery network",
+                "CI/CD": "automated testing and deployment",
+                "Docker": "containerized application",
+                "Kubernetes": "container orchestration",
+            }
+        )
 
         # Error pattern translations
         self._error_patterns = [

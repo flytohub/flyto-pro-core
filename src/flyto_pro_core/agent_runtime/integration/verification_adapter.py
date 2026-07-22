@@ -288,15 +288,10 @@ def merge_verifications(
     gate_success = trust_based.get("success", False)
 
     # Combined confidence: weight deterministic more heavily
-    combined_confidence = (
-        deterministic.confidence * 0.7 +
-        trust_level * 0.3
-    )
+    combined_confidence = deterministic.confidence * 0.7 + trust_level * 0.3
 
     # Final decision: deterministic has veto power
-    final_passed = deterministic.passed and (
-        gate_success or trust_level >= 0.5
-    )
+    final_passed = deterministic.passed and (gate_success or trust_level >= 0.5)
 
     return {
         "passed": final_passed,
@@ -316,8 +311,10 @@ def merge_verifications(
             "trust_evidence": len(trust_based.get("evidence", [])),
         },
         "recommendation": (
-            "proceed" if final_passed else
-            "retry" if combined_confidence > 0.5 else
-            "abort"
+            "proceed"
+            if final_passed
+            else "retry"
+            if combined_confidence > 0.5
+            else "abort"
         ),
     }

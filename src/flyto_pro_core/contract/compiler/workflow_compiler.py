@@ -54,6 +54,7 @@ class PortBinding:
     scope_requires: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "port_id": self.port_id,
             "direction": self.direction,
@@ -75,6 +76,7 @@ class RoutingRule:
     scope_inject: List[str] = field(default_factory=list)  # Scope vars to inject
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "event": self.event,
             "target_node": self.target_node,
@@ -119,6 +121,7 @@ class CompiledNode:
         return None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "id": self.id,
             "module_id": self.module_id,
@@ -176,13 +179,15 @@ class ExecutablePlan:
         else:
             # Return all non-control-flow routes
             return [
-                r.target_node for r in node.routing_rules
+                r.target_node
+                for r in node.routing_rules
                 if r.event in ("next", "out", "done")
             ]
 
         return []
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "workflow_id": self.workflow_id,
             "workflow_name": self.workflow_name,
@@ -208,7 +213,9 @@ class ExecutablePlan:
                 label=node_data["label"],
                 params=node_data["params"],
                 ports=[PortBinding(**p) for p in node_data.get("ports", [])],
-                routing_rules=[RoutingRule(**r) for r in node_data.get("routing_rules", [])],
+                routing_rules=[
+                    RoutingRule(**r) for r in node_data.get("routing_rules", [])
+                ],
                 bindings=node_data.get("bindings"),
                 depends_on=node_data.get("depends_on", []),
                 is_entry=node_data.get("is_entry", False),
@@ -233,7 +240,10 @@ class ExecutablePlan:
 class CompilationError(Exception):
     """Error during workflow compilation."""
 
-    def __init__(self, message: str, validation_report: Optional[ValidationReport] = None):
+    def __init__(
+        self, message: str, validation_report: Optional[ValidationReport] = None
+    ):
+        """Initialize the CompilationError."""
         super().__init__(message)
         self.validation_report = validation_report
 
@@ -251,6 +261,7 @@ class WorkflowCompiler:
     """
 
     def __init__(self, registry: Optional[ContractRegistry] = None):
+        """Initialize the WorkflowCompiler."""
         self.registry = registry or ContractRegistry.instance()
         self.validator = WorkflowValidator(self.registry)
         self.binder = BindingResolver(self.registry)
@@ -300,7 +311,11 @@ class WorkflowCompiler:
             execution_order = [n.id for n in spec.nodes]
 
         # 5. Determine entry nodes
-        entry_nodes = validation_report.entry_nodes if validation_report else spec.find_entry_nodes()
+        entry_nodes = (
+            validation_report.entry_nodes
+            if validation_report
+            else spec.find_entry_nodes()
+        )
         for entry_id in entry_nodes:
             if entry_id in compiled_nodes:
                 compiled_nodes[entry_id].is_entry = True
@@ -316,7 +331,9 @@ class WorkflowCompiler:
             entry_nodes=entry_nodes,
             variables=spec.variables,
             compiled_at=datetime.utcnow().isoformat(),
-            validation_report=validation_report.to_dict() if validation_report else None,
+            validation_report=validation_report.to_dict()
+            if validation_report
+            else None,
         )
 
         logger.info(f"Compiled workflow {spec.id} with {len(compiled_nodes)} nodes")
@@ -345,7 +362,9 @@ class WorkflowCompiler:
                     direction=port.direction.value,
                     edge_type=port.edge_type.value,
                     data_type=port.data_type,
-                    connected_to=self._get_connected_nodes(spec, node.id, port.id, port.direction),
+                    connected_to=self._get_connected_nodes(
+                        spec, node.id, port.id, port.direction
+                    ),
                     scope_provides=port.scope_provides,
                     scope_requires=port.scope_requires,
                 )
@@ -418,12 +437,14 @@ class WorkflowCompiler:
                 if port:
                     scope_inject = port.scope_provides
 
-            rules.append(RoutingRule(
-                event=event,
-                target_node=edge.to_node,
-                target_port=edge.to_port,
-                scope_inject=scope_inject,
-            ))
+            rules.append(
+                RoutingRule(
+                    event=event,
+                    target_node=edge.to_node,
+                    target_port=edge.to_port,
+                    scope_inject=scope_inject,
+                )
+            )
 
         return rules
 

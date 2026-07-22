@@ -52,6 +52,7 @@ class NodeSpec:
     version_required: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "id": self.id,
             "module_id": self.module_id,
@@ -65,6 +66,7 @@ class NodeSpec:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> NodeSpec:
+        """Create an instance from a dictionary."""
         return cls(
             id=data["id"],
             module_id=data["module_id"],
@@ -101,10 +103,14 @@ class EdgeSpec:
     condition: Optional[str] = None
 
     def __post_init__(self):
+        """Normalize EdgeSpec fields after initialization."""
         if not self.id:
-            self.id = f"{self.from_node}:{self.from_port}->{self.to_node}:{self.to_port}"
+            self.id = (
+                f"{self.from_node}:{self.from_port}->{self.to_node}:{self.to_port}"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "id": self.id,
             "from_node": self.from_node,
@@ -117,6 +123,7 @@ class EdgeSpec:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> EdgeSpec:
+        """Create an instance from a dictionary."""
         return cls(
             from_node=data["from_node"],
             to_node=data["to_node"],
@@ -229,6 +236,7 @@ class WorkflowSpec:
         return [n.id for n in self.nodes if n.id not in nodes_with_inputs]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "id": self.id,
             "name": self.name,
@@ -245,6 +253,7 @@ class WorkflowSpec:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> WorkflowSpec:
+        """Create an instance from a dictionary."""
         nodes = [NodeSpec.from_dict(n) for n in data.get("nodes", [])]
         edges = [EdgeSpec.from_dict(e) for e in data.get("edges", [])]
 

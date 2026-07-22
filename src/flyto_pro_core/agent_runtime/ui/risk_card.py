@@ -34,10 +34,12 @@ class RiskFactor:
     affected_areas: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        """Normalize RiskFactor fields after initialization."""
         if not self.factor_id:
             self.factor_id = str(uuid.uuid4())[:8]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "factor_id": self.factor_id,
             "title": self.title,
@@ -87,6 +89,7 @@ class RiskCard:
     affected_resources: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        """Normalize RiskCard fields after initialization."""
         if not self.card_id:
             self.card_id = str(uuid.uuid4())[:12]
 
@@ -123,6 +126,7 @@ class RiskCard:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "card_id": self.card_id,
             "timestamp": self.timestamp,
@@ -144,6 +148,7 @@ class RiskCard:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RiskCard":
+        """Create an instance from a dictionary."""
         factors = []
         for f_data in data.get("factors", []):
             factors.append(
@@ -182,6 +187,7 @@ class RiskCardBuilder:
     """Fluent builder for RiskCard."""
 
     def __init__(self):
+        """Initialize the RiskCardBuilder."""
         self._card = RiskCard()
 
     def title(self, title: str) -> "RiskCardBuilder":
@@ -367,7 +373,9 @@ class RiskAssessor:
             .title(f"Deploy to {environment}")
             .summary(f"Deploy {changes_count} changes to {environment}")
             .factor(
-                title="Production deployment" if environment == "production" else "Environment deployment",
+                title="Production deployment"
+                if environment == "production"
+                else "Environment deployment",
                 description=f"Changes will be visible to {'all users' if environment == 'production' else 'testers'}",
                 level=level,
                 reversible=True,

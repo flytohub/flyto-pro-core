@@ -24,6 +24,7 @@ class ValidationError(Exception):
         param_name: str = None,
         suggestion: str = None,
     ):
+        """Initialize the ValidationError."""
         self.message = message
         self.code = code or "VALIDATION_ERROR"
         self.param_name = param_name
@@ -31,6 +32,7 @@ class ValidationError(Exception):
         super().__init__(message)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize this value to a dictionary."""
         return {
             "error": self.message,
             "code": self.code,
@@ -49,6 +51,7 @@ class Validator:
     """
 
     def __init__(self, value: Any, param_name: str = "value"):
+        """Initialize the Validator."""
         self._value = value
         self._param_name = param_name
 
@@ -218,6 +221,7 @@ class Validator:
 
 
 # Convenience functions for common validations
+
 
 def validate_not_none(value: T, param_name: str = "value") -> T:
     """Validate value is not None."""
