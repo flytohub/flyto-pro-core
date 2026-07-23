@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   contract:
-    uses: flytohub/.github/.github/workflows/reusable-documentation.yml@423fe8478c8b7e3d9481c61c65fc3d8e734fac5f
+    uses: flytohub/.github/.github/workflows/reusable-documentation.yml@d3a8c83f1744042b86e169c41969ad394b60f4ab

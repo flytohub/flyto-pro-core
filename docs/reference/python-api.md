@@ -3220,12 +3220,13 @@ Select blueprints deterministically using search + heuristics.
 |---|---|---|
 | function | [`_requests_browser(text: str) -> bool`](../../src/flyto_pro_core/factory/selector.py#L125) | Return whether one intent explicitly requests browser behavior. |
 | function | [`_rank_direct_matches(phrase: str, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]`](../../src/flyto_pro_core/factory/selector.py#L144) | Keep and rank results that match words from the original request. |
-| function | [`_split_intents(description: str) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L196) | Split a description into separate intent phrases. |
-| function | [`_order_by_dependency(bp_ids: List[str], blueprints: Dict[str, dict]) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L202) | Put list-producing blueprints before item-consuming ones. |
-| function | [`_dedup_by_module(bp_ids: List[str], blueprints: Dict[str, dict]) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L236) | Remove blueprints with overlapping modules. |
-| function | [`_has_dynamic_module(bp_id: str, blueprints: Dict[str, dict]) -> bool`](../../src/flyto_pro_core/factory/selector.py#L272) | Check if blueprint has a dynamic module ID like {{operation}}. |
-| function | [`_is_browser_blueprint(bp_id: str, blueprints: Dict[str, dict]) -> bool`](../../src/flyto_pro_core/factory/selector.py#L282) | Check if a blueprint requires a browser. |
-| function | [`_insert_foreach(bp_ids: List[str], blueprints: Dict[str, dict]) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L295) | Insert foreach_loop between list-producer and item-consumer. |
+| function | [`_shared_word_order_score(request: List[str], candidate: List[str]) -> int`](../../src/flyto_pro_core/factory/selector.py#L203) | Prefer candidates whose shared terms preserve the requested direction. |
+| function | [`_split_intents(description: str) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L215) | Split a description into separate intent phrases. |
+| function | [`_order_by_dependency(bp_ids: List[str], blueprints: Dict[str, dict]) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L221) | Put list-producing blueprints before item-consuming ones. |
+| function | [`_dedup_by_module(bp_ids: List[str], blueprints: Dict[str, dict]) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L255) | Remove blueprints with overlapping modules. |
+| function | [`_has_dynamic_module(bp_id: str, blueprints: Dict[str, dict]) -> bool`](../../src/flyto_pro_core/factory/selector.py#L291) | Check if blueprint has a dynamic module ID like {{operation}}. |
+| function | [`_is_browser_blueprint(bp_id: str, blueprints: Dict[str, dict]) -> bool`](../../src/flyto_pro_core/factory/selector.py#L301) | Check if a blueprint requires a browser. |
+| function | [`_insert_foreach(bp_ids: List[str], blueprints: Dict[str, dict]) -> List[str]`](../../src/flyto_pro_core/factory/selector.py#L314) | Insert foreach_loop between list-producer and item-consumer. |
 
 ## `flyto_pro_core.interfaces.atomic.issue_handler`
 
