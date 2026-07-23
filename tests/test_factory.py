@@ -176,6 +176,14 @@ class TestSelectBlueprints:
         assert r.ok
         assert r.blueprints == ["monitor_http", "notify_slack"]
 
+        # Directional conversions must not flip when both candidates share tags.
+        r = select_blueprints("Convert CSV data to JSON", engine)
+        assert r.ok
+        assert r.blueprints == ["data_csv_to_json"]
+        r = select_blueprints("Convert JSON data to CSV", engine)
+        assert r.ok
+        assert r.blueprints == ["data_json_to_csv"]
+
         # An unsupported request must not silently return an unrelated recipe.
         r = select_blueprints("Generate a QR code", engine)
         assert r.ok is False

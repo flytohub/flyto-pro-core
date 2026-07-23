@@ -159,6 +159,11 @@ def _rank_direct_matches(
     if not words:
         return results
 
+    request_words = [
+        word
+        for word in re.findall(r"[\w-]+", phrase.lower())
+        if len(word) > 1 and word not in _QUERY_STOP_WORDS
+    ]
     ranked = []
     for index, result in enumerate(results):
         identifier = result.get("id", "").lower().replace("_", " ")
@@ -187,10 +192,24 @@ def _rank_direct_matches(
 
         if matched:
             coverage = matched / len(words)
-            ranked.append((coverage, score, -index, result))
+            candidate_words = re.findall(r"[\w-]+", f"{identifier} {name}")
+            order_score = _shared_word_order_score(request_words, candidate_words)
+            ranked.append((coverage, score, order_score, -index, result))
 
-    ranked.sort(reverse=True, key=lambda item: item[:3])
-    return [item[3] for item in ranked]
+    ranked.sort(reverse=True, key=lambda item: item[:4])
+    return [item[4] for item in ranked]
+
+
+def _shared_word_order_score(request: List[str], candidate: List[str]) -> int:
+    """Prefer candidates whose shared terms preserve the requested direction."""
+    first_position = {word: index for index, word in enumerate(candidate)}
+    shared = [word for word in request if word in first_position]
+    return sum(
+        first_position[left] < first_position[right]
+        for index, left in enumerate(shared)
+        for right in shared[index + 1 :]
+        if left != right
+    )
 
 
 def _split_intents(description: str) -> List[str]:
