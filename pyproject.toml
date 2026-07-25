@@ -37,7 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.0.0"]
 qdrant = ["qdrant-client>=1.7.0"]
-core = ["flyto-core>=2.26.9,<3"]
+core = ["flyto-core>=2.26.10,<3"]
 blueprint = ["flyto-blueprint>=0.2.1,<0.3"]
 integration = ["aiohttp>=3.9"]
 factory = ["flyto-pro-core[blueprint,openai]"]
