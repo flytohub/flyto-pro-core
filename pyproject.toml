@@ -43,7 +43,7 @@ integration = ["aiohttp>=3.9"]
 factory = ["flyto-pro-core[blueprint,openai]"]
 full = ["flyto-pro-core[core,openai,qdrant,blueprint]"]
 dev = [
-    "build>=1.2",
+    "build>=1.5.0",
     "mypy>=1.10",
     "pip-audit>=2.9",
     "pytest>=7.0",
