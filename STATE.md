@@ -4,9 +4,11 @@ Current as of 2026-08-03.
 
 - Status: active open-source Python library.
 - Package metadata version: `0.1.3`.
-- Published PyPI version: `0.1.1`. The v0.1.2 GitHub release remains
-  unpublished on PyPI because Ruff 0.16 expanded its default rules and stopped
-  verification before build or upload; v0.1.3 supersedes that failed attempt.
+- Published PyPI version: `0.1.3`, released through GitHub Actions and PyPI
+  Trusted Publishing with wheel and sdist artifacts. The v0.1.2 GitHub release
+  remains unpublished on PyPI because Ruff 0.16 expanded its default rules and
+  stopped verification before build or upload; v0.1.3 supersedes that failed
+  attempt.
 - Public API inventory: 923 public Python classes, functions, and methods,
   generated into `docs/reference/python-api.md`; generation fails when a public
   callable lacks a docstring.
