@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [0.1.3] - 2026-08-03
+
+### Fixed
+
+- Made Ruff release validation deterministic by explicitly retaining the
+  pre-0.16 default rule families after Ruff 0.16 expanded its defaults.
+
 ### Changed
 
 - Replaced generic project and architecture pages with package-specific

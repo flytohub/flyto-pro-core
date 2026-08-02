@@ -1,11 +1,12 @@
 # State
 
-Current as of 2026-07-22.
+Current as of 2026-08-03.
 
 - Status: active open-source Python library.
-- Package metadata version: `0.1.2`.
-- Published PyPI version: `0.1.1`; `0.1.2` is prepared but is not published
-  until a matching GitHub release is created.
+- Package metadata version: `0.1.3`.
+- Published PyPI version: `0.1.1`. The v0.1.2 GitHub release remains
+  unpublished on PyPI because Ruff 0.16 expanded its default rules and stopped
+  verification before build or upload; v0.1.3 supersedes that failed attempt.
 - Public API inventory: 923 public Python classes, functions, and methods,
   generated into `docs/reference/python-api.md`; generation fails when a public
   callable lacks a docstring.
@@ -23,8 +24,11 @@ Current as of 2026-07-22.
   3.10/3.11/3.12/3.13, build and installed-wheel smoke tests, strict Flyto2
   Indexer verification, dependency audit, security/SBOM, branding, and
   documentation-contract checks.
-- Latest local closed loop: `python scripts/verify.py` passed with Flyto2
-  Indexer 17/17, documentation score 100, and no secret or taint findings.
+- Ruff validation explicitly selects the pre-0.16 default rule families, so
+  release results do not change when Ruff expands its implicit defaults.
+- Latest local closed loop: `python scripts/verify.py` passed all 46 tests with
+  Flyto2 Indexer 18/18, documentation score 100, and no secret or taint
+  findings; the release lint command also passed under Ruff 0.16.1.
 - Clean Python 3.11 installation resolved the public PyPI Blueprint/Core
   dependencies, passed all tests and `pip check`, and reported no known
   dependency vulnerabilities after upgrading the CI build toolchain.
