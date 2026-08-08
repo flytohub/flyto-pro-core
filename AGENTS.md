@@ -65,3 +65,24 @@ Any frontend, website, dashboard, extension webview, app screen, or generated UI
 8. Hard-to-understand content: copy must be concrete, scannable, current, and consistent with Flyto2 terminology.
 
 Frontend verification must include the relevant automated checks plus manual or screenshot review for responsive layout, accessibility states, navigation clarity, loading/empty/error states, and content readability. Public pages must preserve SEO basics: canonical URL, sitemap coverage, metadata, structured data when relevant, and no broken internal or external links.
+
+## Repo notes
+
+Merged from `CLAUDE.md` so Codex and Claude read one set of rules.
+
+`flyto-pro-core` participates in: cloud_apps_automation, security, zero_person_agent.
+
+Start with:
+
+1. `PROJECT.md`
+2. `ARCHITECTURE.md`
+3. `STATE.md`
+4. `DECISIONS.md`
+
+Never infer or reuse credentials from repository files or handoffs.
+
+Before editing, refresh the local index with `flyto-index scan .` and inspect
+affected symbols with `flyto-index impact` or `flyto-index context`. After
+editing, run the full `python scripts/verify.py` gate. Do not report completion
+from lint alone: tests, generated references, package artifacts, example drift,
+and strict Indexer verification are required.
