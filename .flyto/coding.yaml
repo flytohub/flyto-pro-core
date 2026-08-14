@@ -11,6 +11,6 @@ checks:
     required: true
   - name: verify
     argv: [.venv/bin/python, scripts/verify.py]
-    timeout_seconds: 1800
+    timeout_seconds: 900
     required: true
 capabilities: []

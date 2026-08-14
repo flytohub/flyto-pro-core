@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Capped the governed verifier timeout at the coding-service contract maximum
+  so valid jobs pass preflight instead of being rejected before admission.
 - Kept dependency-installed Markdown under virtual environments and
   `node_modules` out of the repository documentation-link audit.
 

@@ -4,7 +4,8 @@ Current as of 2026-08-14.
 
 - Governed coding jobs create an isolated Python environment, install the
   pinned project/development contract, and run the complete verification suite
-  through `.flyto/coding.yaml` before independent Codex audit.
+  through `.flyto/coding.yaml` before independent Codex audit. The final
+  verifier is bounded by the service's 900-second contract maximum.
 
 - Status: active open-source Python library.
 - Package metadata version: `0.1.3`.
