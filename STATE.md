@@ -1,6 +1,10 @@
 # State
 
-Current as of 2026-08-03.
+Current as of 2026-08-14.
+
+- Governed coding jobs create an isolated Python environment, install the
+  pinned project/development contract, and run the complete verification suite
+  through `.flyto/coding.yaml` before independent Codex audit.
 
 - Status: active open-source Python library.
 - Package metadata version: `0.1.3`.

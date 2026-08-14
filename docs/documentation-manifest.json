@@ -43,6 +43,12 @@
       "description": "Recipe-based workflow generation, dependency injection, validation helpers, safe access, and typed configuration.",
       "paths": ["src/flyto_pro_core/factory/**", "src/flyto_pro_core/core/**", "src/flyto_pro_core/config/**"],
       "documentation": ["docs/FACTORY.md", "docs/FEATURES.md#factory-pipeline", "docs/FEATURES.md#core-utilities", "docs/CONFIGURATION.md"]
+    },
+    {
+      "id": "verification-and-release",
+      "description": "Governed environment setup, full verification, packaging, publication workflows, and package metadata.",
+      "paths": ["scripts/**", ".github/workflows/**", ".flyto/coding.yaml", "pyproject.toml"],
+      "documentation": ["docs/RELEASE.md", "scripts/README.md", "AGENTS.md"]
     }
   ],
   "feature_surfaces": [

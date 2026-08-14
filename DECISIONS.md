@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-08-14 - Library changes use the governed coding route
+
+Decision: keep isolated environment creation, project installation, and the
+complete `scripts/verify.py` suite in `.flyto/coding.yaml`. Public package copy
+and contract behavior require an independent Codex audit after that gate.
+
+Reason: this library validates workflows, evidence, and budgets but does not
+execute them. A committed verifier protects that boundary and the built package
+from drifting together.
+
 ## 2026-06-21 - Project memory bootstrapped
 
 Decision: track Flyto2 product-line role, repo boundary, state, roadmap, tasks,

@@ -1,0 +1,16 @@
+# Host-owned verification contract for governed Flyto2 coding jobs.
+version: flyto.coding-config.v1
+checks:
+  - name: environment
+    argv: [/opt/homebrew/bin/python3.11, -m, venv, --clear, .venv]
+    timeout_seconds: 300
+    required: true
+  - name: install
+    argv: [.venv/bin/python, -m, pip, install, ".[dev,core,blueprint]"]
+    timeout_seconds: 900
+    required: true
+  - name: verify
+    argv: [.venv/bin/python, scripts/verify.py]
+    timeout_seconds: 1800
+    required: true
+capabilities: []

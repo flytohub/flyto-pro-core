@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- Added a governed Flyto2 coding contract that creates an isolated environment
+  and runs the complete library verification and packaging suite.
+
+### Fixed
+
+- Kept dependency-installed Markdown under virtual environments and
+  `node_modules` out of the repository documentation-link audit.
+
 ## [0.1.3] - 2026-08-03
 
 ### Fixed

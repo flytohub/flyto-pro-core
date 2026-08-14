@@ -15,5 +15,6 @@ venv/
 env/
 .env
 *.db
-.flyto/
+.flyto/*
+!.flyto/coding.yaml
 .flyto-index/

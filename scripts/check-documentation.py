@@ -12,7 +12,16 @@ from typing import Iterator
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs" / "documentation-manifest.json"
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
-SKIP_PARTS = {".flyto-index", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
+SKIP_PARTS = {
+    ".flyto-index",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "node_modules",
+    "venv",
+}
 NON_DOCUMENTATION_KEYS = {
     "configuration_not_applicable",
     "module_roots",
